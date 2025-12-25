@@ -1,0 +1,141 @@
+<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#customers {border-collapse: collapse;width: 100%;font-size: 12px;}#customers td, #customers th {border: 1px solid #ddd;padding: 2px;}#customers tr:nth-child(even){background-color: #f2f2f2;}#customers tr:hover {background-color: #ddd;}#customers th {padding-top: 2px;padding-bottom: 2px;text-align: left;color: black;}</style><body>
+        <center>
+            <div style="float: left; font-size: 12px; text-align: left;">
+                <table style="width: 100%;">
+                    <tr>
+                        <td width="50" style="font-size: 12px; vertical-align: top; text-align: center; vertical-align:jus margin-right:10px;">
+                            <img src="http://bri.astechno.net/erp/assets/image/config/favicon/1711423106.png" width="30">
+                        </td>
+                        <td style="font-size: 14px; text-align: left; margin:2px;">
+                            <b>PT BANSHU RUBBER INDONESIA</b><br>
+                            <small>MASTER NG</small>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div style="float: right; font-size: 12px; text-align: right;">
+                Print Date 17 Dec 2025 12:59:36 <br>
+                Print By itki04  
+            </div>
+        </center>
+        <br><br><br>
+        
+        <table id="customers" border="1">
+            <tr>
+                <th width="20">No</th>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Description</th>
+            </tr><tr>
+                    <td>1</td>
+                    <td>NG-01</td>
+                    <td>Belang</td>
+                    <td>-</td><tr>
+                    <td>2</td>
+                    <td>NG-02</td>
+                    <td>Burry ke-press</td>
+                    <td>-</td><tr>
+                    <td>3</td>
+                    <td>NG-03</td>
+                    <td>Dented/penyok</td>
+                    <td>-</td><tr>
+                    <td>4</td>
+                    <td>NG-04</td>
+                    <td>Dimensi Tidak Standar</td>
+                    <td>-</td><tr>
+                    <td>5</td>
+                    <td>NG-05</td>
+                    <td>Gelembung</td>
+                    <td>-</td><tr>
+                    <td>6</td>
+                    <td>NG-06</td>
+                    <td>Keriput (Overcure)</td>
+                    <td>-</td><tr>
+                    <td>7</td>
+                    <td>NG-07</td>
+                    <td>Kotor</td>
+                    <td>-</td><tr>
+                    <td>8</td>
+                    <td>NG-08</td>
+                    <td>Lubang Tidak Center</td>
+                    <td>-</td><tr>
+                    <td>9</td>
+                    <td>NG-09</td>
+                    <td>Material Asing</td>
+                    <td>-</td><tr>
+                    <td>10</td>
+                    <td>NG-10</td>
+                    <td>Mengelupas</td>
+                    <td>-</td><tr>
+                    <td>11</td>
+                    <td>NG-11</td>
+                    <td>NG Mold</td>
+                    <td>-</td><tr>
+                    <td>12</td>
+                    <td>NG-12</td>
+                    <td>Overcut</td>
+                    <td>-</td><tr>
+                    <td>13</td>
+                    <td>NG-13</td>
+                    <td>Permukaan kasar</td>
+                    <td>-</td><tr>
+                    <td>14</td>
+                    <td>NG-14</td>
+                    <td>Sobek Deflashing</td>
+                    <td>-</td><tr>
+                    <td>15</td>
+                    <td>NG-15</td>
+                    <td>Sobek Finishing</td>
+                    <td>-</td><tr>
+                    <td>16</td>
+                    <td>NG-16</td>
+                    <td>Sobek Lock</td>
+                    <td>-</td><tr>
+                    <td>17</td>
+                    <td>NG-17</td>
+                    <td>Sobek Press</td>
+                    <td>-</td><tr>
+                    <td>18</td>
+                    <td>NG-18</td>
+                    <td>Sobek Tergunting</td>
+                    <td>-</td><tr>
+                    <td>19</td>
+                    <td>NG-19</td>
+                    <td>Tidak Mengisi</td>
+                    <td>-</td><tr>
+                    <td>20</td>
+                    <td>NG-20</td>
+                    <td>Tidak Menyatu</td>
+                    <td>-</td><tr>
+                    <td>21</td>
+                    <td>NG-21</td>
+                    <td>Tidak Simetris</td>
+                    <td>-</td><tr>
+                    <td>22</td>
+                    <td>NG-22</td>
+                    <td>Under cure</td>
+                    <td>-</td><tr>
+                    <td>23</td>
+                    <td>NG-23</td>
+                    <td>Warna Tidak Standar</td>
+                    <td>-</td><tr>
+                    <td>24</td>
+                    <td>NG-24</td>
+                    <td>Bergelombang</td>
+                    <td>-</td><tr>
+                    <td>25</td>
+                    <td>NG-25</td>
+                    <td>Core Patah</td>
+                    <td>-</td><tr>
+                    <td>26</td>
+                    <td>NG-26</td>
+                    <td>Material tidak hancur</td>
+                    <td>-</td><tr>
+                    <td>27</td>
+                    <td>NG-27</td>
+                    <td>NG Trial</td>
+                    <td>-</td><tr>
+                    <td>28</td>
+                    <td>NG-28</td>
+                    <td>Permukaan kasar</td>
+                    <td>-</td></table></body></html>

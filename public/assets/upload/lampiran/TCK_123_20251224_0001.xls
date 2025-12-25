@@ -1,0 +1,248 @@
+<html><head><title>Print Data</title></head><style>body {font-family: Arial, Helvetica, sans-serif;}#customers {border-collapse: collapse;width: 100%;font-size: 12px;}#customers td, #customers th {border: 1px solid black;padding: 2px;}#customers tr:nth-child(even){background-color: #f2f2f2;}#customers tr:hover {background-color: black;}#customers th {padding-top: 2px;padding-bottom: 2px;text-align: center;color: black;}</style><body>
+            <center>
+                <div style="float: left; font-size: 12px; text-align: left;">
+                    <table style="width: 100%;">
+                        <tr>
+                            <td width="50" style="font-size: 12px; vertical-align: top; text-align: center; vertical-align:jus margin-right:10px;">
+                                <img src="http://bri.astechno.net/erp/assets/image/config/favicon/1711423106.png" width="30">
+                            </td>
+                            <td style="font-size: 14px; text-align: left; margin:2px;">
+                                <b>PT BANSHU RUBBER INDONESIA</b><br>
+                                <small>PURCHASE REQUEST</small>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div style="float: right; font-size: 12px; text-align: right;">
+                    Print Date 23 Dec 2025 08:32:14 <br>
+                    Print By itki04  
+                </div>
+            </center>
+            <br><br><br>
+            
+            <table id="customers" border="1">
+            <tr>
+                <th width="20">No</th>
+                <th>Request No</th>
+                <th>Request Date</th>
+                <th>Expected Date</th>
+                <th>Request Name</th>
+                <th>Part No External</th>
+                <th>Part Name</th>
+                <th>Qty</th>
+                <th>Uom</th>
+                <th>PO No</th>
+                <th>Plant</th>
+                <th>Status</th>
+                <th>Remarks</th>
+            </tr><tr>
+                        <td style="text-align:center">1</td>
+                        <td>PR-RM250130-0001</td>
+                        <td>2025-01-24</td>
+                        <td>2025-02-03</td>
+                        <td>Cici Irma Nuryanti</td>
+                        <td>RUB-00078</td>
+                        <td>CR 2322</td>
+                        <td>1,000.00</td>
+                        <td>KG</td>
+                        <td></td>
+                        <td>RUBBER PART</td>
+                        <td>OPEN</td>
+                        <td></td>
+                    </tr><tr>
+                        <td style="text-align:center">2</td>
+                        <td>PR-RM250130-0001</td>
+                        <td>2025-01-24</td>
+                        <td>2025-02-03</td>
+                        <td>Cici Irma Nuryanti</td>
+                        <td>RUB-00050</td>
+                        <td>EPT 3092 M</td>
+                        <td>1,000.00</td>
+                        <td>KG</td>
+                        <td></td>
+                        <td>RUBBER PART</td>
+                        <td>OPEN</td>
+                        <td></td>
+                    </tr><tr>
+                        <td style="text-align:center">3</td>
+                        <td>PR-RM250130-0001</td>
+                        <td>2025-01-24</td>
+                        <td>2025-02-03</td>
+                        <td>Cici Irma Nuryanti</td>
+                        <td>RUB-00077</td>
+                        <td>ESPRENE 512E</td>
+                        <td>500.00</td>
+                        <td>KG</td>
+                        <td></td>
+                        <td>RUBBER PART</td>
+                        <td>OPEN</td>
+                        <td></td>
+                    </tr><tr>
+                        <td style="text-align:center">4</td>
+                        <td>PR-RM250130-0001</td>
+                        <td>2025-01-24</td>
+                        <td>2025-02-03</td>
+                        <td>Cici Irma Nuryanti</td>
+                        <td>RUB-00037</td>
+                        <td>HIGH STEARINE 68</td>
+                        <td>40.00</td>
+                        <td>KG</td>
+                        <td></td>
+                        <td>RUBBER PART</td>
+                        <td>OPEN</td>
+                        <td></td>
+                    </tr><tr>
+                        <td style="text-align:center">5</td>
+                        <td>PR-RM250130-0001</td>
+                        <td>2025-01-24</td>
+                        <td>2025-02-03</td>
+                        <td>Cici Irma Nuryanti</td>
+                        <td>RUB-00066</td>
+                        <td>JSR N240 S</td>
+                        <td>350.00</td>
+                        <td>KG</td>
+                        <td></td>
+                        <td>RUBBER PART</td>
+                        <td>OPEN</td>
+                        <td></td>
+                    </tr><tr>
+                        <td style="text-align:center">6</td>
+                        <td>PR-RM250130-0001</td>
+                        <td>2025-01-24</td>
+                        <td>2025-02-03</td>
+                        <td>Cici Irma Nuryanti</td>
+                        <td>RUB-00002</td>
+                        <td>KELTAN 8570</td>
+                        <td>2,000.00</td>
+                        <td>KG</td>
+                        <td></td>
+                        <td>RUBBER PART</td>
+                        <td>OPEN</td>
+                        <td></td>
+                    </tr><tr>
+                        <td style="text-align:center">7</td>
+                        <td>PR-RM250130-0001</td>
+                        <td>2025-01-24</td>
+                        <td>2025-02-03</td>
+                        <td>Cici Irma Nuryanti</td>
+                        <td>RUB-00003</td>
+                        <td>KNB 35 L</td>
+                        <td>105.00</td>
+                        <td>KG</td>
+                        <td></td>
+                        <td>RUBBER PART</td>
+                        <td>OPEN</td>
+                        <td></td>
+                    </tr><tr>
+                        <td style="text-align:center">8</td>
+                        <td>PR-RM250130-0001</td>
+                        <td>2025-01-24</td>
+                        <td>2025-02-03</td>
+                        <td>Cici Irma Nuryanti</td>
+                        <td>RUB-00035</td>
+                        <td>KRYNAC 3345 C</td>
+                        <td>400.00</td>
+                        <td>KG</td>
+                        <td></td>
+                        <td>RUBBER PART</td>
+                        <td>OPEN</td>
+                        <td></td>
+                    </tr><tr>
+                        <td style="text-align:center">9</td>
+                        <td>PR-RM250130-0001</td>
+                        <td>2025-01-24</td>
+                        <td>2025-02-03</td>
+                        <td>Cici Irma Nuryanti</td>
+                        <td>RUB-00010</td>
+                        <td>NBR 7030</td>
+                        <td>300.00</td>
+                        <td>KG</td>
+                        <td></td>
+                        <td>RUBBER PART</td>
+                        <td>OPEN</td>
+                        <td></td>
+                    </tr><tr>
+                        <td style="text-align:center">10</td>
+                        <td>PR-RM250130-0001</td>
+                        <td>2025-01-24</td>
+                        <td>2025-02-03</td>
+                        <td>Cici Irma Nuryanti</td>
+                        <td>RUB-00005</td>
+                        <td>ROYALENE 5010</td>
+                        <td>500.00</td>
+                        <td>KG</td>
+                        <td></td>
+                        <td>RUBBER PART</td>
+                        <td>OPEN</td>
+                        <td></td>
+                    </tr><tr>
+                        <td style="text-align:center">11</td>
+                        <td>PR-RM250130-0001</td>
+                        <td>2025-01-24</td>
+                        <td>2025-02-03</td>
+                        <td>Cici Irma Nuryanti</td>
+                        <td>RUB-00011</td>
+                        <td>RSS III</td>
+                        <td>1,800.00</td>
+                        <td>KG</td>
+                        <td></td>
+                        <td>RUBBER PART</td>
+                        <td>OPEN</td>
+                        <td></td>
+                    </tr><tr>
+                        <td style="text-align:center">12</td>
+                        <td>PR-RM250130-0001</td>
+                        <td>2025-01-24</td>
+                        <td>2025-02-03</td>
+                        <td>Cici Irma Nuryanti</td>
+                        <td>RUB-00042</td>
+                        <td>SIR 10</td>
+                        <td>700.00</td>
+                        <td>KG</td>
+                        <td></td>
+                        <td>RUBBER PART</td>
+                        <td>OPEN</td>
+                        <td></td>
+                    </tr><tr>
+                        <td style="text-align:center">13</td>
+                        <td>PR-RM250130-0001</td>
+                        <td>2025-01-24</td>
+                        <td>2025-02-03</td>
+                        <td>Cici Irma Nuryanti</td>
+                        <td>SIL-00036</td>
+                        <td>TL-870 (LS)</td>
+                        <td>1,000.00</td>
+                        <td>KG</td>
+                        <td></td>
+                        <td>RUBBER PART</td>
+                        <td>OPEN</td>
+                        <td></td>
+                    </tr><tr>
+                        <td style="text-align:center">14</td>
+                        <td>PR-RM250130-0001</td>
+                        <td>2025-01-24</td>
+                        <td>2025-02-03</td>
+                        <td>Cici Irma Nuryanti</td>
+                        <td>RUB-00001</td>
+                        <td>VISTALON V7001</td>
+                        <td>2,500.00</td>
+                        <td>KG</td>
+                        <td></td>
+                        <td>RUBBER PART</td>
+                        <td>OPEN</td>
+                        <td></td>
+                    </tr><tr>
+                        <td style="text-align:center">15</td>
+                        <td>PR-RM250130-0001</td>
+                        <td>2025-01-24</td>
+                        <td>2025-02-03</td>
+                        <td>Cici Irma Nuryanti</td>
+                        <td>RUB-00019</td>
+                        <td>X-BUTYL RB 301</td>
+                        <td>34.00</td>
+                        <td>KG</td>
+                        <td></td>
+                        <td>RUBBER PART</td>
+                        <td>OPEN</td>
+                        <td></td>
+                    </tr></table></body></html>
