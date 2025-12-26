@@ -250,7 +250,7 @@ $(document).ready(function() {
 
         let hideButtons = true; 
         
-        if (jenis_ticket === 'software') {
+        if (jenis_ticket === 'software' || jenis_ticket === 'hardware') {
             if (currentUser === rowData.approver_level2 && (rowData.status_level2 === null || rowData.status_level2 === undefined)) {
                 hideButtons = false;
             }
@@ -261,11 +261,7 @@ $(document).ready(function() {
                 hideButtons = false;
             }
         }
-        else if (jenis_ticket === 'hardware') {
-            if (currentUser === rowData.approver_depthead && (rowData.status_deptheadapprove === null || rowData.status_deptheadapprove === undefined)) {
-                hideButtons = false;
-            }
-        }
+
 
         if (hideButtons) {
             $('#btnApproved').hide();

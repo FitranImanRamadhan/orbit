@@ -118,7 +118,7 @@ class TicketingController extends Controller
                 })
                 ->first();
             if (!$hirarki) {
-                return response()->json(['message' => 'Hirarki user tidak ditemukan untuk plant dan departemen anda']);
+                return response()->json(['message' => 'Hirarki user tidak ditemukan untuk plant dan departemen']);
             }
             // Inisialisasi approvers default
             $approvers = [
@@ -275,7 +275,7 @@ class TicketingController extends Controller
                         $ticket_no,
                         $username,
                         $plantId,
-                        "Ticket ($ticket_no) otomatis disetujui karena Anda berada di level tertinggi approval."
+                        "Ticket ($ticket_no) otomatis disetujui karena berada di level tertinggi approval."
                     );
                 }
             }
@@ -321,19 +321,21 @@ class TicketingController extends Controller
             })
             ->leftJoin('hardwares as d', 'a.item_ticket', '=', 'd.id_hardware')
             ->leftJoin('softwares as e', 'a.item_ticket', '=', 'e.id_software')
-            ->selectRaw("
-                    DISTINCT ON (a.ticket_no)
-                    a.*,
-                    b.nama_lengkap,
-                    c.nama_departemen,
-                    f.nama_plant,
-                    h.level1, h.level2, h.level3, h.level4,
-                    CASE 
+            ->select(
+                'a.*',
+                'b.nama_lengkap',
+                'c.nama_departemen',
+                'f.nama_plant',
+                'h.level1',
+                'h.level2',
+                'h.level3',
+                'h.level4',
+                DB::raw("CASE 
                         WHEN a.jenis_ticket = 'hardware' THEN d.nama_hardware
                         WHEN a.jenis_ticket = 'software' THEN e.nama_software
-                        ELSE NULL
-                    END as nama_item
-                ");
+                        ELSE NULL 
+                    END as nama_item")
+            );
 
         // FILTER
         $query->where('b.plant_id', $plantId);
@@ -342,10 +344,7 @@ class TicketingController extends Controller
         if ($request->start_date && $request->end_date) $query->whereBetween('a.tgl_permintaan', [$request->start_date, $request->end_date]);
         if ($request->ticket_no) $query->where('a.ticket_no', $request->ticket_no);
 
-        $tickets = $query
-            ->orderBy('a.ticket_no')                     // 🔥 wajib pertama (DISTINCT ON)
-            ->orderBy('a.tgl_permintaan', 'desc')
-            ->get();
+        $tickets = $query->orderBy('a.tgl_permintaan', 'desc')->get();
 
         if ($tickets->isEmpty()) {
             return response()->json([
@@ -356,74 +355,61 @@ class TicketingController extends Controller
         }
         $filtered = [];
         foreach ($tickets as $ticket) {
-
-            // HANYA software & hardware
-            if (!in_array($ticket->jenis_ticket, ['software', 'hardware'])) {
-                continue;
-            }
-
-            $show_ticket  = false;
+            $show_ticket = false;
             $need_approve = false;
 
-            // ===== LOGIC APPROVAL =====
-            $maker_level = 0;
-            $level1_users = json_decode($ticket->level1) ?: [];
+            if ($ticket->jenis_ticket == 'software' || $ticket->jenis_ticket == 'hardware') {
 
-            if ($ticket->user_create == $ticket->level4) $maker_level = 4;
-            elseif ($ticket->user_create == $ticket->level3) $maker_level = 3;
-            elseif ($ticket->user_create == $ticket->level2) $maker_level = 2;
-            elseif (in_array($ticket->user_create, $level1_users)) $maker_level = 1;
+                // Tentukan maker level
+                $maker_level  = 0;
+                $level1_users = json_decode($ticket->level1) ?: [];
+                if ($ticket->user_create == $ticket->level4) $maker_level = 4;
+                elseif ($ticket->user_create == $ticket->level3) $maker_level = 3;
+                elseif ($ticket->user_create == $ticket->level2) $maker_level = 2;
+                elseif (in_array($ticket->user_create, $level1_users)) $maker_level = 1;
+                $ticket->maker_level = $maker_level;
 
-            $ticket->maker_level = $maker_level;
+                // APPROVAL FLOW manual
+                $approvalFlow = [];
+                if (!empty($ticket->approver_level2)) $approvalFlow[2] = ['username' => $ticket->approver_level2, 'status' => $ticket->status_level2];
+                if (!empty($ticket->approver_level3)) $approvalFlow[3] = ['username' => $ticket->approver_level3, 'status' => $ticket->status_level3];
+                if (!empty($ticket->approver_level4)) $approvalFlow[4] = ['username' => $ticket->approver_level4, 'status' => $ticket->status_level4];
 
-            $approval_flow = [];
-            if (!empty($ticket->level2)) $approval_flow[2] = $ticket->level2;
-            if (!empty($ticket->level3)) $approval_flow[3] = $ticket->level3;
-            if (!empty($ticket->level4)) $approval_flow[4] = $ticket->level4;
+                // NEXT APPROVER manual
+                // LEVEL 2
+                if (isset($approvalFlow[2]) && $maker_level < 2 && is_null($approvalFlow[2]['status']) && $username === $approvalFlow[2]['username']) {
+                    $show_ticket = true;
+                    $need_approve = true;
+                }
+                // LEVEL 3
+                elseif (isset($approvalFlow[3]) && $maker_level < 3 && is_null($approvalFlow[3]['status']) && $username === $approvalFlow[3]['username']) {
+                    // cek level sebelumnya harus approve atau NULL
+                    $level2_ok = !isset($approvalFlow[2]) || $approvalFlow[2]['status'] === true || is_null($approvalFlow[2]['status']);
+                    if ($level2_ok) {
+                        $show_ticket = true;
+                        $need_approve = true;
+                    }
+                }
 
-            $next_approval_level = null;
+                // LEVEL 4
+                elseif (isset($approvalFlow[4]) && $maker_level < 4 && is_null($approvalFlow[4]['status']) && $username === $approvalFlow[4]['username']) {
+                    // cek level sebelumnya harus approve atau NULL
+                    $level2_ok = !isset($approvalFlow[2]) || $approvalFlow[2]['status'] === true || is_null($approvalFlow[2]['status']);
+                    $level3_ok = !isset($approvalFlow[3]) || $approvalFlow[3]['status'] === true || is_null($approvalFlow[3]['status']);
 
-            foreach (array_keys($approval_flow) as $level) {
-                if ($level > $maker_level) {
-                    $next_approval_level = $level;
-                    break;
+                    if ($level2_ok && $level3_ok) {
+                        $show_ticket = true;
+                        $need_approve = true;
+                    }
                 }
             }
 
-            if ($next_approval_level) {
-                $current_approver = $approval_flow[$next_approval_level];
-
-                if ($username === $current_approver) {
-                    $show_ticket  = true;
-                    $status_field = 'status_level' . $next_approval_level;
-                    $need_approve = empty($ticket->$status_field);
-                }
-            }
-            $next_approval_level = null;
-
-            foreach (array_keys($approval_flow) as $level) {
-                if ($level > $maker_level) {
-                    $next_approval_level = $level;
-                    break;
-                }
-            }
-
-            if ($next_approval_level) {
-                $current_approver = $approval_flow[$next_approval_level];
-
-                if ($username === $current_approver) {
-                    $show_ticket  = true;
-                    $status_field = 'status_level' . $next_approval_level;
-                    $need_approve = empty($ticket->$status_field);
-                }
-            }
 
             if ($show_ticket) {
                 $ticket->need_approve = $need_approve;
                 $filtered[] = $ticket;
             }
         }
-
 
         return response()->json([
             'success' => true,
@@ -442,143 +428,121 @@ class TicketingController extends Controller
                 'remarks'   => 'nullable|string'
             ]);
 
-            $username = Auth::user()->username;
-            $splant_id = Auth::user()->plant_id;
+            $pengguna_login = Auth::user()->username;
+            $plant_id_login = Auth::user()->plant_id;
 
-            // Ambil ticket berdasarkan ticket_no
-            $ticket = DB::table('tbl_tickets')->where('ticket_no', $request->ticket_no)->first();
-            if (!$ticket) {
-                return response()->json(['success' => false, 'message' => 'Ticket tidak ditemukan'], 404);
+            // Ambil tiket
+            $tiket = DB::table('tbl_tickets')->where('ticket_no', $request->ticket_no)->first();
+            if (!$tiket) {
+                return response()->json(['success' => false, 'message' => 'Tiket tidak ditemukan'], 404);
             }
 
-            // Ambil user pembuat
-            $user = DB::table('users')->where('username', $ticket->user_create)->first();
-            if (!$user) {
+            // Ambil user pembuat tiket
+            $user_pembuat = DB::table('users')->where('username', $tiket->user_create)->first();
+            if (!$user_pembuat) {
                 return response()->json(['success' => false, 'message' => 'User pembuat tidak ditemukan'], 404);
             }
 
-            // Ambil hirarki berdasarkan plant_id & departemen_id user pembuat
-            $hirarki = DB::table('user_hirarkis')
-                ->where('plant_id', $user->plant_id)
-                ->where('departemen_id', $user->departemen_id)
-                ->where(function ($q) use ($ticket) {
-                    $q->where('level2', $ticket->user_create)
-                        ->orWhere('level3', $ticket->user_create)
-                        ->orWhere('level4', $ticket->user_create)
-                        ->orWhereJsonContains('level1', $ticket->user_create);
+            // Ambil hirarki user pembuat
+            $hirarki_user = DB::table('user_hirarkis')
+                ->where('plant_id', $user_pembuat->plant_id)
+                ->where('departemen_id', $user_pembuat->departemen_id)
+                ->where(function ($q) use ($tiket) {
+                    $q->where('level2', $tiket->user_create)
+                        ->orWhere('level3', $tiket->user_create)
+                        ->orWhere('level4', $tiket->user_create)
+                        ->orWhereJsonContains('level1', $tiket->user_create);
                 })
                 ->first();
-            if (!$hirarki) {
-    return response()->json([
-        'success' => false,
-        'message' => 'Hirarki user tidak ditemukan'
-    ], 404);
-}
 
+            $waktu_sekarang = now();
+            $update_data = [];
 
-            $updateFields   = [];
-            $now            = now();
-            $message        = "";
-            $currentLevel   = null;
+            // ================= LOGIC APPROVAL DINAMIS =================
+            if ($tiket->jenis_ticket == 'software' || $tiket->jenis_ticket == 'hardware') {
+                $level1_users = json_decode($hirarki_user->level1, true) ?: [];
 
-            if ($ticket->jenis_ticket == 'software' || $ticket->jenis_ticket == 'hardware') {
-                $level1_users = json_decode($hirarki->level1, true) ?: [];
+                $update_data = [];
 
+                // ==== LEVEL 2 ====
+                if (!empty($tiket->approver_level2) && $pengguna_login == $tiket->approver_level2) {
+                    if (is_null($tiket->status_level2) || $tiket->status_level2 === '') {
+                        $update_data['status_level2'] = $request->status == 'approved' ? TRUE : FALSE;
+                        $update_data['remarks2'] = $request->remarks ?? null;
+                        $update_data['date_level2'] = $waktu_sekarang;
+                        $update_data['status_approval'] = 'waiting';
 
-                $maker_level = 0;
-
-                //cari pembuat tiket berada di level mana
-                if ($ticket->user_create == $hirarki->level4) $maker_level           = 4;
-                elseif ($ticket->user_create == $hirarki->level3) $maker_level       = 3;
-                elseif ($ticket->user_create == $hirarki->level2) $maker_level       = 2;
-                elseif (in_array($ticket->user_create, $level1_users)) $maker_level  = 1;
-
-
-                // Level 2 approval
-                if ($username == $ticket->approver_level2 && (is_null($ticket->status_level2) || $ticket->status_level2 === '')) {
-                    $currentLevel = 2;
-                    if ($maker_level     != 1) {
-                        return response()->json(['success' => false, 'message' => 'Anda tidak memiliki hak approve level 2'], 403);
-                    }
-                    $updateFields = [
-                        'status_level2' => $request->status == 'approved' ? TRUE : FALSE,
-                        'remarks2' => $request->remarks ?? null,
-                        'date_level2' => $now
-                    ];
-                    if ($request->status == 'approved') {
-                        $message = "Ticket $ticket->ticket_no membutuhkan approval berikutnya.";
-                        NotificationHelper::send($ticket->ticket_no, $ticket->approver_level3, $splant_id, $message);
-                    }
-                }
-                // Level 3 approval
-                elseif ($username == $ticket->approver_level3 && (is_null($ticket->status_level3) || $ticket->status_level3 === '')) {
-                    $currentLevel = 3;
-                    if (($maker_level == 1 && $ticket->status_level2 != TRUE) || $maker_level > 2) {
-                        return response()->json(['success' => false, 'message' => 'Level sebelumnya belum approve'], 400);
-                    }
-                    $updateFields = [
-                        'status_level3' => $request->status == 'approved' ? TRUE : FALSE,
-                        'remarks3' => $request->remarks ?? null,
-                        'date_level3' => $now
-                    ];
-                    if ($request->status == 'approved') {
-                        $message = "Ticket $ticket->ticket_no menunggu approval Level 4.";
-                        NotificationHelper::send($ticket->ticket_no, $ticket->approver_level4, $splant_id, $message);
-                    }
-                }
-                // Level 4 approval
-                elseif ($username == $ticket->approver_level4 && (is_null($ticket->status_level4) || $ticket->status_level4 === '')) {
-                    $currentLevel = 4;
-                    if (($maker_level == 1 && ($ticket->status_level2 != TRUE || ($ticket->approver_level3 && $ticket->status_level3 != TRUE))) ||
-                        ($maker_level == 2 && ($ticket->approver_level3 && $ticket->status_level3 != TRUE))
-                    ) {
-                        return response()->json(['success' => false, 'message' => 'Level sebelumnya belum approve'], 400);
-                    }
-                    $updateFields = [
-                        'status_level4' => $request->status == 'approved' ? TRUE : FALSE,
-                        'remarks4' => $request->remarks ?? null,
-                        'date_level4' => $now
-                    ];
-                    if ($request->status == 'approved') {
-                        $message = "Ticket Anda ($ticket->ticket_no) telah FULL APPROVED.";
-                        NotificationHelper::send($ticket->ticket_no, $ticket->user_create, $splant_id, $message);
-                    }
-                } else {
-                    return response()->json(['success' => false, 'message' => 'Anda tidak memiliki hak approve ticket ini'], 403);
-                }
-
-                if ($request->status == "rejected") {
-                    $levelMsg = $currentLevel ? "pada Level $currentLevel" : "";
-                    $message = "Ticket Anda ($ticket->ticket_no) DITOLAK oleh $username $levelMsg.";
-                    NotificationHelper::send($ticket->ticket_no, $ticket->user_create, $splant_id, $message);
-                }
-
-                if ($username == $ticket->approver_level4) {
-                    if ($request->status == 'approved') {
-                        $statusApproval = 'approved';
-                    } elseif ($request->status == 'rejected') {
-                        $statusApproval = 'rejected';
-                    }
-                } else {
-
-                    // Level lain: HANYA BOLEH ubah jika rejected
-                    if ($request->status === 'rejected') {
-                        $statusApproval = 'rejected';
+                        $penerima_selanjutnya = $tiket->approver_level3 ?? $tiket->approver_level4 ?? $tiket->user_create;
+                        $pesan = $request->status == 'approved'
+                            ? "Tiket $tiket->ticket_no membutuhkan approval berikutnya."
+                            : "Tiket ($tiket->ticket_no) DITOLAK oleh $pengguna_login pada Level 2.";
+                        NotificationHelper::send($tiket->ticket_no, $penerima_selanjutnya, $plant_id_login, $pesan);
                     } else {
-                        // approved / lainnya tidak mengubah status
-                        $statusApproval = $ticket->status_approval ?? 'waiting';
+                        return response()->json(['success' => false, 'message' => 'Level 2 sudah diapprove'], 403);
                     }
                 }
 
-                $updateFields['status_approval'] = $statusApproval;
+                // ==== LEVEL 3 ====
+                if (!empty($tiket->approver_level3) && $pengguna_login == $tiket->approver_level3) {
+                    // Cek level sebelumnya jika ada
+                    if (!empty($tiket->approver_level2) && $tiket->status_level2 !== TRUE) {
+                        return response()->json(['success' => false, 'message' => 'Level sebelumnya belum approve'], 403);
+                    }
+
+                    if (is_null($tiket->status_level3) || $tiket->status_level3 === '') {
+                        $update_data['status_level3'] = $request->status == 'approved' ? TRUE : FALSE;
+                        $update_data['remarks3'] = $request->remarks ?? null;
+                        $update_data['date_level3'] = $waktu_sekarang;
+                        $update_data['status_approval'] = 'waiting';
+
+                        $penerima_selanjutnya = $tiket->approver_level4 ?? $tiket->user_create;
+                        $pesan = $request->status == 'approved'
+                            ? "Tiket $tiket->ticket_no menunggu approval Level 4."
+                            : "Tiket  ($tiket->ticket_no) DITOLAK oleh $pengguna_login pada Level 3.";
+                        NotificationHelper::send($tiket->ticket_no, $penerima_selanjutnya, $plant_id_login, $pesan);
+                    } else {
+                        return response()->json(['success' => false, 'message' => 'Level 3 sudah diapprove'], 403);
+                    }
+                }
+
+                // ==== LEVEL 4 ====
+                if (!empty($tiket->approver_level4) && $pengguna_login == $tiket->approver_level4) {
+                    // Cek level sebelumnya jika ada
+                    if ((!empty($tiket->approver_level2) && $tiket->status_level2 !== TRUE) ||
+                        (!empty($tiket->approver_level3) && $tiket->status_level3 !== TRUE)
+                    ) {
+                        return response()->json(['success' => false, 'message' => 'Level sebelumnya belum approve'], 403);
+                    }
+
+                    if (is_null($tiket->status_level4) || $tiket->status_level4 === '') {
+                        $update_data['status_level4'] = $request->status == 'approved' ? TRUE : FALSE;
+                        $update_data['remarks4'] = $request->remarks ?? null;
+                        $update_data['date_level4'] = $waktu_sekarang;
+                        $update_data['status_approval'] = $request->status == 'approved' ? 'approved' : 'rejected';
+
+                        $pesan = $request->status == 'approved'
+                            ? "Tiket anda($tiket->ticket_no) telah FULL APPROVED."
+                            : "Tiket anda ($tiket->ticket_no) DITOLAK oleh $pengguna_login pada Level 4.";
+                        NotificationHelper::send($tiket->ticket_no, $tiket->user_create, $plant_id_login, $pesan);
+                    } else {
+                        return response()->json(['success' => false, 'message' => 'Level 4 sudah diapprove'], 403);
+                    }
+                }
+
+                if (empty($update_data)) {
+                    return response()->json(['success' => false, 'message' => 'Tidak ada level approval yang valid atau user tidak memiliki hak'], 403);
+                }
+
+                // Update database
+                DB::table('tbl_tickets')->where('ticket_no', $tiket->ticket_no)->update($update_data);
             }
 
-            // Update ke database
-            DB::table('tbl_tickets')->where('ticket_no', $ticket->ticket_no)->update($updateFields);
+
+            // Log aktivitas
             ActivityLogger::log(
                 $request->status == 'approved' ? 'approve' : 'reject',
-                'Ticket',
-                'Primary: ' . $ticket->ticket_no
+                'Tiket',
+                'Primary: ' . $tiket->ticket_no
             );
 
             DB::commit();
@@ -586,16 +550,17 @@ class TicketingController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => $request->status == 'approved'
-                    ? 'Ticket berhasil di APPROVE!'
-                    : 'Ticket berhasil ditolak.'
+                    ? 'Tiket berhasil di APPROVE!'
+                    : 'Tiket berhasil ditolak.'
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
-                'message' => 'Gagal membuat ticket: ' . $e->getMessage(),
+                'message' => 'Gagal memproses tiket: ' . $e->getMessage(),
             ], 500);
         }
     }
+
 
     //track ticket
     public function track_ticket()
@@ -749,7 +714,7 @@ class TicketingController extends Controller
         ]);
 
         // Kirim notifikasi
-        $message = "Ticket Anda ($ticket->ticket_no) sedang diproses oleh tim IT.";
+        $message = "Ticket ($ticket->ticket_no) sedang diproses oleh tim IT.";
         NotificationHelper::send($ticket->ticket_no, $ticket->user_create, $ticket->plant_id, $message);
 
         return response()->json(['success' => true, 'message' => 'Ticket telah dimulai.']);
@@ -782,7 +747,7 @@ class TicketingController extends Controller
         ]);
 
         // Kirim notifikasi selesai
-        $message = "Ticket Anda ($ticket->ticket_no) telah selesai dikerjakan.";
+        $message = "Ticket ($ticket->ticket_no) telah selesai dikerjakan.";
         NotificationHelper::send($ticket->ticket_no, $ticket->user_create, $ticket->plant_id, $message);
 
         return response()->json(['success' => true, 'message' => 'Ticket telah selesai.']);
@@ -862,7 +827,7 @@ class TicketingController extends Controller
         ]);
 
         // Kirim notifikasi
-        $message = "Ticket Anda ($ticket->ticket_no) sedang diproses oleh tim IT.";
+        $message = "Ticket ($ticket->ticket_no) sedang diproses oleh tim IT.";
         NotificationHelper::send(
             $ticket->ticket_no,
             $ticket->user_create,
@@ -903,7 +868,7 @@ class TicketingController extends Controller
         ]);
 
         // Kirim notifikasi selesai
-        $message = "Ticket Anda ($ticket->ticket_no) telah selesai dikerjakan.";
+        $message = "Ticket ($ticket->ticket_no) telah selesai dikerjakan.";
         NotificationHelper::send(
             $ticket->ticket_no,
             $ticket->user_create,
