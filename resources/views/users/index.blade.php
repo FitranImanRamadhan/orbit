@@ -131,6 +131,15 @@
 <script>
 $(document).ready(function() {
     let mode = '';
+    let nama_departemen = "{{ Auth::user()->nama_departemen }}";
+    let user_akses = "{{ Auth::user()->user_akses }}";
+
+// // Cek kondisi
+// if (user_akses === 'administrator') {
+//     $('#div_username').show(); // tampilkan
+// } else {
+//     $('#div_username').hide(); // sembunyikan
+// }
     $('#tabel').DataTable({
         processing: true,
         serverSide: false,

@@ -30,10 +30,7 @@ class CreateTblTicketsTable extends Migration
             $table->text('remarks4')->nullable();                                   // untuk software
                                               
             $table->text('remarks')->nullable();                                    // untuk hardware
-            $table->string('approver_depthead', 100)->nullable();                   // untuk hardware
-            $table->boolean('status_deptheadapprove')->nullable()->default(null);   // untuk hardware
-            $table->timestamp('date_deptheadapprove')->nullable();                  // untuk hardware
-            $table->text('remarks_depthead')->nullable();                           // untuk hardware
+            $table->string('approver_depthead', 100)->nullable();                   // untuk hardware                    // untuk hardware
             $table->text('jenis_pengecekan')->nullable();                           // untuk hardware
             $table->text('counter_measure')->nullable();                            // untuk hardware
             $table->text('next_plan')->nullable();                                  // untuk hardware
@@ -50,7 +47,7 @@ class CreateTblTicketsTable extends Migration
             $table->string('it_finish')->nullable();                                // untuk keduanya
             $table->timestamp('time_start')->nullable();                            // untuk keduanya
             $table->timestamp('time_finish')->nullable();                           // untuk keduanya
-            $table->string('status_problem', 30)->default('open');                  // untuk keduanya
+            $table->string('status_problem', 30)->nullable()->default(null);                  // untuk keduanya
             $table->string('jenis_problem', 30)->nullable();                        // untuk keduanya
             $table->string('file1')->nullable();                                    // untuk keduanya
             $table->string('file2')->nullable();                                    // untuk keduanya

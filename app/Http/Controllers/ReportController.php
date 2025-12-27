@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 use App\Models\ReportTicket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;  
+use App\Exports\TicketReportExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
 {
@@ -471,6 +473,101 @@ class ReportController extends Controller
 
     public function proses_approval_report_ticket(Request $request)
     {
+    }
+
+    public function export_excel(Request $request)
+    {
+        $request->validate([
+            'year' => 'required|integer',
+            'month' => 'required|integer',
+            'week' => 'required|integer',
+            'jenis_ticket' => 'required|string',
+        ]);
+
+        $year = $request->year;
+        $month = $request->month;
+        $week = $request->week;
+        $jenis_ticket = $request->jenis_ticket;
+
+        $startDay = ($week - 1) * 7 + 1;
+        $endDay   = min($startDay + 6, cal_days_in_month(CAL_GREGORIAN, $month, $year));
+
+        $data = DB::table('tbl_tickets as a')
+        ->join('users as b', 'b.username', '=', 'a.user_create')
+        ->leftJoin('departemens as c', 'b.departemen_id', '=', 'c.id_departemen')
+        ->selectRaw("
+            c.nama_departemen,
+            COALESCE(SUM(CASE WHEN a.jenis_problem = 'manpower' THEN 1 ELSE 0 END), 0) AS manpower,
+            COALESCE(SUM(CASE WHEN a.jenis_problem = 'hardware' THEN 1 ELSE 0 END), 0) AS hardware,
+            COALESCE(SUM(CASE WHEN a.jenis_problem = 'network'  THEN 1 ELSE 0 END), 0) AS network,
+            COALESCE(SUM(CASE WHEN a.jenis_problem = 'software' THEN 1 ELSE 0 END), 0) AS software,
+            COALESCE(SUM(CASE WHEN a.status_problem = 'closed' THEN 1 ELSE 0 END), 0) AS solved,
+            COALESCE(SUM(CASE WHEN a.status_problem <> 'closed' THEN 1 ELSE 0 END), 0) AS unsolved,
+            COUNT(*) AS total
+        ")
+        ->where('a.jenis_ticket', $jenis_ticket)   // 🔥 DINAMIS
+        ->whereYear('a.tgl_permintaan', $year)
+        ->whereMonth('a.tgl_permintaan', $month)
+        ->whereRaw('EXTRACT(DAY FROM a.tgl_permintaan) BETWEEN ? AND ?', [$startDay, $endDay])
+        ->groupBy('c.nama_departemen')
+        ->orderBy('c.nama_departemen')
+        ->get();
+
+        if ($data->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data tidak ditemukan untuk periode yang dipilih.',
+                'data' => []
+            ]);
+        }
+        
+         // ===============================
+        // PIE (Jenis Departemen)
+        // ===============================
+        $pieChart = DB::table('tbl_tickets as a')
+            ->join('users as b', 'b.username', '=', 'a.user_create')
+            ->leftJoin('departemens as c', 'b.departemen_id', '=', 'c.id_departemen')
+            ->select(
+                'c.nama_departemen',
+                DB::raw('COUNT(*) AS total')
+            )
+            ->where('a.jenis_ticket', $jenis_ticket)
+            ->whereYear('a.tgl_permintaan', $year)
+            ->whereMonth('a.tgl_permintaan', $month)
+            ->whereRaw('EXTRACT(DAY FROM a.tgl_permintaan) BETWEEN ? AND ?', [$startDay, $endDay])
+            ->groupBy('c.id_departemen')
+            ->orderBy('c.id_departemen')
+            ->get();
+
+        // ===============================
+        // DOUGHNUT (Jenis Problem)
+        // ===============================
+        $doughnutChart = DB::table('tbl_tickets as a')
+            ->join('users as b', 'b.username', '=', 'a.user_create')
+            ->selectRaw("
+                SUM(CASE WHEN a.jenis_problem = 'manpower' THEN 1 ELSE 0 END) AS chart_sum_manpower,
+                SUM(CASE WHEN a.jenis_problem = 'hardware' THEN 1 ELSE 0 END) AS chart_sum_hardware,
+                SUM(CASE WHEN a.jenis_problem = 'network'  THEN 1 ELSE 0 END) AS chart_sum_network,
+                SUM(CASE WHEN a.jenis_problem = 'software' THEN 1 ELSE 0 END) AS chart_sum_software
+            ")
+            ->where('a.jenis_ticket', $jenis_ticket)
+            ->whereYear('a.tgl_permintaan', $year)
+            ->whereMonth('a.tgl_permintaan', $month)
+            ->whereRaw('EXTRACT(DAY FROM a.tgl_permintaan) BETWEEN ? AND ?', [$startDay, $endDay])
+            ->first();
+        // dd($data, $pieChart, $doughnutChart);
+        return Excel::download(
+            new TicketReportExport(
+                $data,
+                $pieChart,
+                $doughnutChart,
+                $week,
+                $month,
+                $year
+            ),
+            "ticket_{$jenis_ticket}_{$year}_{$month}_week{$week}.xlsx"
+        );
+
     }
 
 }

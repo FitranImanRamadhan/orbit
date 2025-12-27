@@ -30,11 +30,24 @@ class HardwareController extends Controller
     // Create
     public function create(Request $request)
     {
-        $request->validate([
-            'nama_hardware' => 'required|string|max:100',
-            'kategori' => 'nullable|string|max:50',
-            'keterangan' => 'nullable|string'
-        ]);
+        $request->validate(
+            [
+                'kategori' => 'nullable|string|max:50',
+                'keterangan' => 'nullable|string'
+            ]
+        );
+
+        $exists = DB::table('hardwares')
+                ->where('nama_hardware', $request->nama_hardware)
+                ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nama hardware sudah digunakan, silakan pilih nama lain.',
+                'data'    => null
+            ]);
+        }
 
         $hardware = Hardware::create([
             'nama_hardware' => $request->nama_hardware,
@@ -42,7 +55,7 @@ class HardwareController extends Controller
             'keterangan' => $request->keterangan
         ]);
 
-        ActivityLogger::log('create', 'Hardware', 'Primary: '.$hardware->id_hardware);
+        ActivityLogger::log('create', 'Hardware', 'Primary: ' . $hardware->id_hardware);
 
         return response()->json([
             'success' => true,
@@ -56,7 +69,6 @@ class HardwareController extends Controller
     {
         $request->validate([
             'id_hardware' => 'required|integer',
-            'nama_hardware' => 'required|string|max:100',
             'kategori' => 'nullable|string|max:50',
             'keterangan' => 'nullable|string'
         ]);
@@ -70,6 +82,17 @@ class HardwareController extends Controller
             ], 404);
         }
 
+        $exists = DB::table('hardwares')
+        ->where('nama_hardware', $request->nama_hardware)
+        ->where('id_hardware', '!=', $request->id_hardware)
+        ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nama hardware sudah digunakan, silakan pilih nama lain.'
+            ], 200);
+        }
         DB::table('hardwares')
             ->where('id_hardware', $request->id_hardware)
             ->update([
@@ -79,7 +102,7 @@ class HardwareController extends Controller
                 'updated_at' => now()
             ]);
 
-        ActivityLogger::log('update', 'Hardware', 'Primary: '.$hardware->id_hardware);
+        ActivityLogger::log('update', 'Hardware', 'Primary: ' . $hardware->id_hardware);
 
         return response()->json([
             'success' => true,
@@ -105,7 +128,7 @@ class HardwareController extends Controller
             ], 404);
         }
 
-        ActivityLogger::log('delete', 'Hardware', 'Primary: '.$hardware->id_hardware);
+        ActivityLogger::log('delete', 'Hardware', 'Primary: ' . $hardware->id_hardware);
         $hardware->delete();
         return response()->json([
             'success' => true,

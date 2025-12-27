@@ -91,7 +91,7 @@ class TicketingController extends Controller
         try {
             $request->validate([
                 'jenisTicket' => 'required|string',
-                'tglPermintaan' => 'required|date',
+                'tglPermintaan' => 'required|date_format:Y-m-d',
                 'deskripsi' => 'nullable|string',
                 'dept_us' => 'nullable|string',
                 'kategoriKlaim' => 'nullable|string',
@@ -134,7 +134,7 @@ class TicketingController extends Controller
             ];
             // Cek jenisTicket
             $user_level = null;
-            if (strtolower($request->jenisTicket) == 'software' || strtolower($request->jenisTicket) == 'hardware') {
+            if (strtolower($request->jenisTicket) == 'software') {
 
                 // Level1 berupa array JSON
                 $level1_users = json_decode($hirarki->level1, true);
@@ -171,17 +171,10 @@ class TicketingController extends Controller
                         dd($username, $hirarki->level1, $hirarki->level2, $hirarki->level3, $hirarki->level4);
                         return response()->json(['message' => 'Username tidak ada di hirarki'], 400);
                 }
-            } else {
-                // Kalau hardware, semua level approver diganti '-'
-                $approvers['approver_level2']   = '-';
-                $approvers['approver_level3']   = '-';
-                $approvers['approver_level4']   = '-';
-                $approvers['status_level2']     = null;
-                $approvers['status_level3']     = null;
-                $approvers['status_level4']     = null;
-                $approvers['date_level2']       = null;
-                $approvers['date_level3']       = null;
-                $approvers['date_level4']       = null;
+            } elseif (strtolower($request->jenisTicket) === 'hardware') {
+                // hanya pakai level 3
+                $approvers['approver_level3'] = $hirarki->level3;
+                // level 2 & 4 BIARKAN NULL (jangan diisi apa pun)
             }
 
             // 1. Generate no ticket
@@ -211,11 +204,10 @@ class TicketingController extends Controller
                 'ticket_no'          => $ticket_no,
                 'jenis_ticket'       => $request->jenisTicket,
                 'item_ticket'        => $request->item_ticket,
-                'tgl_permintaan'     => $request->tglPermintaan,
+                'tgl_permintaan'     => $request->tglPermintaan . ' ' . now()->format('H:i:s'),
                 'kategori_klaim'     => $request->kategoriKlaim,
                 'deskripsi'          => $request->deskripsi,
-                'approver_depthead'  => $request->dept_us,
-                'user_create'         => $username,
+                'user_create'        => $username,
                 'approver_level2'    => $approvers['approver_level2'],
                 'approver_level3'    => $approvers['approver_level3'],
                 'approver_level4'    => $approvers['approver_level4'],
@@ -321,21 +313,20 @@ class TicketingController extends Controller
             })
             ->leftJoin('hardwares as d', 'a.item_ticket', '=', 'd.id_hardware')
             ->leftJoin('softwares as e', 'a.item_ticket', '=', 'e.id_software')
-            ->select(
-                'a.*',
-                'b.nama_lengkap',
-                'c.nama_departemen',
-                'f.nama_plant',
-                'h.level1',
-                'h.level2',
-                'h.level3',
-                'h.level4',
-                DB::raw("CASE 
+            ->where('status_approval', 'waiting')
+            ->selectRaw("
+                    DISTINCT ON (a.ticket_no)
+                    a.*,
+                    b.nama_lengkap,
+                    c.nama_departemen,
+                    f.nama_plant,
+                    h.level1, h.level2, h.level3, h.level4,
+                    CASE 
                         WHEN a.jenis_ticket = 'hardware' THEN d.nama_hardware
                         WHEN a.jenis_ticket = 'software' THEN e.nama_software
-                        ELSE NULL 
-                    END as nama_item")
-            );
+                        ELSE NULL
+                    END as nama_item
+                ");
 
         // FILTER
         $query->where('b.plant_id', $plantId);
@@ -344,7 +335,10 @@ class TicketingController extends Controller
         if ($request->start_date && $request->end_date) $query->whereBetween('a.tgl_permintaan', [$request->start_date, $request->end_date]);
         if ($request->ticket_no) $query->where('a.ticket_no', $request->ticket_no);
 
-        $tickets = $query->orderBy('a.tgl_permintaan', 'desc')->get();
+        $tickets = $query
+            ->orderBy('a.ticket_no')                     // 🔥 wajib pertama (DISTINCT ON)
+            ->orderBy('a.tgl_permintaan', 'desc')
+            ->get();
 
         if ($tickets->isEmpty()) {
             return response()->json([
@@ -357,30 +351,30 @@ class TicketingController extends Controller
         foreach ($tickets as $ticket) {
             $show_ticket = false;
             $need_approve = false;
+            // Tentukan maker level
+            $maker_level  = 0;
+            $level1_users = json_decode($ticket->level1) ?: [];
+            if ($ticket->user_create == $ticket->level4) $maker_level = 4;
+            elseif ($ticket->user_create == $ticket->level3) $maker_level = 3;
+            elseif ($ticket->user_create == $ticket->level2) $maker_level = 2;
+            elseif (in_array($ticket->user_create, $level1_users)) $maker_level = 1;
+            $ticket->maker_level = $maker_level;
 
-            if ($ticket->jenis_ticket == 'software' || $ticket->jenis_ticket == 'hardware') {
+            // APPROVAL FLOW manual
+            $approvalFlow = [];
+            if (!empty($ticket->approver_level2)) $approvalFlow[2] = ['username' => $ticket->approver_level2, 'status' => $ticket->status_level2];
+            if (!empty($ticket->approver_level3)) $approvalFlow[3] = ['username' => $ticket->approver_level3, 'status' => $ticket->status_level3];
+            if (!empty($ticket->approver_level4)) $approvalFlow[4] = ['username' => $ticket->approver_level4, 'status' => $ticket->status_level4];
 
-                // Tentukan maker level
-                $maker_level  = 0;
-                $level1_users = json_decode($ticket->level1) ?: [];
-                if ($ticket->user_create == $ticket->level4) $maker_level = 4;
-                elseif ($ticket->user_create == $ticket->level3) $maker_level = 3;
-                elseif ($ticket->user_create == $ticket->level2) $maker_level = 2;
-                elseif (in_array($ticket->user_create, $level1_users)) $maker_level = 1;
-                $ticket->maker_level = $maker_level;
-
-                // APPROVAL FLOW manual
-                $approvalFlow = [];
-                if (!empty($ticket->approver_level2)) $approvalFlow[2] = ['username' => $ticket->approver_level2, 'status' => $ticket->status_level2];
-                if (!empty($ticket->approver_level3)) $approvalFlow[3] = ['username' => $ticket->approver_level3, 'status' => $ticket->status_level3];
-                if (!empty($ticket->approver_level4)) $approvalFlow[4] = ['username' => $ticket->approver_level4, 'status' => $ticket->status_level4];
-
+            if ($ticket->jenis_ticket == 'software') {
+                
                 // NEXT APPROVER manual
                 // LEVEL 2
                 if (isset($approvalFlow[2]) && $maker_level < 2 && is_null($approvalFlow[2]['status']) && $username === $approvalFlow[2]['username']) {
                     $show_ticket = true;
                     $need_approve = true;
                 }
+
                 // LEVEL 3
                 elseif (isset($approvalFlow[3]) && $maker_level < 3 && is_null($approvalFlow[3]['status']) && $username === $approvalFlow[3]['username']) {
                     // cek level sebelumnya harus approve atau NULL
@@ -402,8 +396,18 @@ class TicketingController extends Controller
                         $need_approve = true;
                     }
                 }
-            }
+            } elseif ($ticket->jenis_ticket === 'hardware') {
 
+                if (
+                    isset($approvalFlow[3]) &&
+                    $maker_level < 3 &&
+                    is_null($approvalFlow[3]['status']) &&
+                    $username === $approvalFlow[3]['username']
+                ) {
+                    $show_ticket = true;
+                    $need_approve = true;
+                }
+            }
 
             if ($show_ticket) {
                 $ticket->need_approve = $need_approve;
@@ -459,7 +463,7 @@ class TicketingController extends Controller
             $update_data = [];
 
             // ================= LOGIC APPROVAL DINAMIS =================
-            if ($tiket->jenis_ticket == 'software' || $tiket->jenis_ticket == 'hardware') {
+            if ($tiket->jenis_ticket == 'software') {
                 $level1_users = json_decode($hirarki_user->level1, true) ?: [];
 
                 $update_data = [];
@@ -467,16 +471,23 @@ class TicketingController extends Controller
                 // ==== LEVEL 2 ====
                 if (!empty($tiket->approver_level2) && $pengguna_login == $tiket->approver_level2) {
                     if (is_null($tiket->status_level2) || $tiket->status_level2 === '') {
-                        $update_data['status_level2'] = $request->status == 'approved' ? TRUE : FALSE;
+                        $update_data['status_level2'] = $request->status == 'approved' ? true : ($request->status == 'rejected' ? false : null);
                         $update_data['remarks2'] = $request->remarks ?? null;
                         $update_data['date_level2'] = $waktu_sekarang;
-                        $update_data['status_approval'] = 'waiting';
+                        $update_data['status_approval'] = $request->status == 'approved' ? 'waiting' : 'rejected';
+                        $update_data['status_problem'] = $request->status == 'approved' ? null : 'canceled';
 
                         $penerima_selanjutnya = $tiket->approver_level3 ?? $tiket->approver_level4 ?? $tiket->user_create;
-                        $pesan = $request->status == 'approved'
-                            ? "Tiket $tiket->ticket_no membutuhkan approval berikutnya."
-                            : "Tiket ($tiket->ticket_no) DITOLAK oleh $pengguna_login pada Level 2.";
-                        NotificationHelper::send($tiket->ticket_no, $penerima_selanjutnya, $plant_id_login, $pesan);
+                        if ($request->status == 'approved') {
+                            $pesan = "Tiket $tiket->ticket_no membutuhkan approval berikutnya.";
+                            NotificationHelper::send($tiket->ticket_no, $penerima_selanjutnya, $plant_id_login, $pesan);
+
+                            $pesan_user = "Tiket $tiket->ticket_no telah disetujui pada tahap 1.";
+                            NotificationHelper::send($tiket->ticket_no, $tiket->user_create, $plant_id_login, $pesan_user);
+                        } else {
+                            $pesan = "Tiket $tiket->ticket_no anda telah ditolak.";
+                            NotificationHelper::send($tiket->ticket_no, $tiket->user_create, $plant_id_login, $pesan);
+                        }
                     } else {
                         return response()->json(['success' => false, 'message' => 'Level 2 sudah diapprove'], 403);
                     }
@@ -490,16 +501,23 @@ class TicketingController extends Controller
                     }
 
                     if (is_null($tiket->status_level3) || $tiket->status_level3 === '') {
-                        $update_data['status_level3'] = $request->status == 'approved' ? TRUE : FALSE;
+                        $update_data['status_level3'] = $request->status == 'approved' ? true : ($request->status == 'rejected' ? false : null);
                         $update_data['remarks3'] = $request->remarks ?? null;
                         $update_data['date_level3'] = $waktu_sekarang;
-                        $update_data['status_approval'] = 'waiting';
+                        $update_data['status_approval'] = $request->status == 'approved' ? 'waiting' : 'rejected';
+                        $update_data['status_problem'] = $request->status == 'approved' ? null : 'canceled';
 
                         $penerima_selanjutnya = $tiket->approver_level4 ?? $tiket->user_create;
-                        $pesan = $request->status == 'approved'
-                            ? "Tiket $tiket->ticket_no menunggu approval Level 4."
-                            : "Tiket  ($tiket->ticket_no) DITOLAK oleh $pengguna_login pada Level 3.";
-                        NotificationHelper::send($tiket->ticket_no, $penerima_selanjutnya, $plant_id_login, $pesan);
+                        if ($request->status == 'approved') {
+                            $pesan = "Tiket $tiket->ticket_no membutuhkan approval berikutnya.";
+                            NotificationHelper::send($tiket->ticket_no, $penerima_selanjutnya, $plant_id_login, $pesan);
+
+                            $pesan_user = "Tiket $tiket->ticket_no telah disetujui pada tahap 2.";
+                            NotificationHelper::send($tiket->ticket_no, $tiket->user_create, $plant_id_login, $pesan_user);
+                        } else {
+                            $pesan = "Tiket $tiket->ticket_no anda telah ditolak.";
+                            NotificationHelper::send($tiket->ticket_no, $tiket->user_create, $plant_id_login, $pesan);
+                        }
                     } else {
                         return response()->json(['success' => false, 'message' => 'Level 3 sudah diapprove'], 403);
                     }
@@ -515,10 +533,11 @@ class TicketingController extends Controller
                     }
 
                     if (is_null($tiket->status_level4) || $tiket->status_level4 === '') {
-                        $update_data['status_level4'] = $request->status == 'approved' ? TRUE : FALSE;
+                        $update_data['status_level4'] = $request->status == 'approved' ? true : ($request->status == 'rejected' ? false : null);
                         $update_data['remarks4'] = $request->remarks ?? null;
                         $update_data['date_level4'] = $waktu_sekarang;
                         $update_data['status_approval'] = $request->status == 'approved' ? 'approved' : 'rejected';
+                        $update_data['status_problem'] = $request->status == 'approved' ? 'open' : 'canceled';
 
                         $pesan = $request->status == 'approved'
                             ? "Tiket anda($tiket->ticket_no) telah FULL APPROVED."
@@ -535,15 +554,46 @@ class TicketingController extends Controller
 
                 // Update database
                 DB::table('tbl_tickets')->where('ticket_no', $tiket->ticket_no)->update($update_data);
+            } elseif ($tiket->jenis_ticket == 'hardware') {
+
+                $update_data = [];
+
+                // ==== LEVEL 3 SAJA (FINAL) ====
+                if (!empty($tiket->approver_level3) && $pengguna_login == $tiket->approver_level3) {
+
+                    if (is_null($tiket->status_level3) || $tiket->status_level3 === '') {
+
+                        $update_data['status_level3'] = $request->status == 'approved' ? true : false;
+                        $update_data['remarks3'] = $request->remarks ?? null;
+                        $update_data['date_level3'] = $waktu_sekarang;
+                        $update_data['status_approval'] = $request->status == 'approved' ? 'approved' : 'rejected';
+                        $update_data['status_problem'] = $request->status == 'approved' ? 'open' : 'canceled';
+
+                        $pesan = $request->status == 'approved'
+                            ? "Tiket anda ($tiket->ticket_no) telah DISETUJUI."
+                            : "Tiket anda ($tiket->ticket_no) DITOLAK.";
+                        NotificationHelper::send($tiket->ticket_no,  $tiket->user_create, $plant_id_login, $pesan);
+                    } else {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Level 3 sudah diapprove'
+                        ], 403);
+                    }
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'User tidak memiliki hak approval level 3'
+                    ], 403);
+                }
+
+                // Update database
+                DB::table('tbl_tickets') ->where('ticket_no', $tiket->ticket_no)->update($update_data);
             }
 
 
+
             // Log aktivitas
-            ActivityLogger::log(
-                $request->status == 'approved' ? 'approve' : 'reject',
-                'Tiket',
-                'Primary: ' . $tiket->ticket_no
-            );
+            ActivityLogger::log($request->status == 'approved' ? 'approve' : 'reject', 'Tiket', 'Primary: ' . $tiket->ticket_no);
 
             DB::commit();
 
@@ -657,7 +707,6 @@ class TicketingController extends Controller
             ->leftJoin('departemens as c', 'b.departemen_id', '=', 'c.id_departemen')
             ->leftJoin('softwares as d', 'a.item_ticket', '=', 'd.id_software')
             ->leftJoin('plants as f', 'b.plant_id', '=', 'f.id_plant')
-            ->where('a.status_level4', TRUE)
             ->select(
                 'a.*',
                 'b.nama_lengkap as nama_lengkap',
@@ -766,6 +815,7 @@ class TicketingController extends Controller
             ->leftJoin('departemens as c', 'b.departemen_id', '=', 'c.id_departemen')
             ->leftJoin('hardwares as d', 'a.item_ticket', '=', 'd.id_hardware')
             ->leftJoin('plants as f', 'b.plant_id', '=', 'f.id_plant')
+            ->where('jenis_ticket', $request->jenis_ticket)
             ->select(
                 'a.*',
                 'b.nama_lengkap as nama_lengkap',
@@ -775,9 +825,6 @@ class TicketingController extends Controller
             );
         if ($request->start_date && $request->end_date) {
             $query->whereBetween('tgl_permintaan', [$request->start_date, $request->end_date]);
-        }
-        if ($request->jenis_ticket) {
-            $query->where('jenis_ticket', $request->jenis_ticket);
         }
         if ($request->ticket_no) {
             $query->where('ticket_no', $request->ticket_no);

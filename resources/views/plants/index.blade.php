@@ -181,7 +181,7 @@ function btnSimpan() {
     let label = $('#label').val().trim();
 
     if (nama === '') {
-        etErrorFocus('#nama_plant');
+        setErrorFocus('#nama_plant');
         return Swal.fire('Peringatan', 'Nama plant tidak boleh kosong', 'warning');
     }
 

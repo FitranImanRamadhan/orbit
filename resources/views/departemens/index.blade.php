@@ -149,9 +149,13 @@ $(document).ready(function() {
             type: 'POST',
             data: {  id_departemen: id_departemen, nama_departemen: nama_departemen },
             success: function(response) {
-                $('#deptmodal').modal('hide');
-                $('#tabel').DataTable().ajax.reload();
-                Swal.fire('Berhasil', response.message, 'success');
+               if (response.success) {
+                    $('#deptmodal').modal('hide');
+                    $('#tabel').DataTable().ajax.reload();
+                    Swal.fire('Berhasil', response.message, 'success');
+                } else {
+                    Swal.fire('Warning', response.message, 'warning');
+                }
             },
             error: function(xhr) {
                 let err = xhr.responseJSON?.message || 'Terjadi kesalahan saat menyimpan';

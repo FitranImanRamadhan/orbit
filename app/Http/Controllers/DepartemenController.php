@@ -32,6 +32,20 @@ class DepartemenController extends Controller
             'nama_departemen' => 'required|string|max:60'
         ]);
 
+        // cek nama departemen (case-insensitive)
+        $exists = Departemen::whereRaw(
+            'LOWER(nama_departemen) = ?',
+            [strtolower($request->nama_departemen)]
+        )->exists();
+
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nama departemen sudah terdaftar',
+                'data' => null
+            ]);
+        }
+
         $departemen = Departemen::create([
             'nama_departemen' => $request->nama_departemen
         ]);
@@ -57,6 +71,19 @@ class DepartemenController extends Controller
                 'success' => false,
                 'message' => 'Departemen tidak ditemukan'
             ], 404);
+        }
+
+        $exists = DB::table('departemens')
+        ->whereRaw('LOWER(nama_departemen) = ?', [strtolower($request->nama_departemen)])
+        ->where('id_departemen', '!=', $request->id_departemen)
+        ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nama departemen sudah digunakan',
+                'data' => null
+            ]);
         }
 
         // Update data

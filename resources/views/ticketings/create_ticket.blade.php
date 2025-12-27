@@ -21,11 +21,6 @@
                         <label class="form-label fw-semibold">Tanggal Permintaan</label>
                         <input type="date" id="tgl_permintaan" class="form-control">
                     </div>
-                    <div id="dropdownDeptHead" class="mb-3">
-                        <label class="form-label fw-semibold">Dept Head Approve</label>
-                        <input type="text" id="dept_head" class="form-control"  placeholder="Ketik nama komputer..." style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 4 5%27%3E%3Cpath fill=%27%23333%27 d=%27M2 0L0 2h4L2 0zm0 5L0 3h4l-2 2z%27/%3E%3C/svg%3E'); background-repeat:no-repeat; background-position:right 0.75rem center; background-size:8px 10px;">
-                        <input type="hidden" id="dept_us">
-                    </div>
                     <div id="dropdownHardware" class="mb-3">
                         <label class="form-label fw-semibold">Daftar Komputer</label>
                         <input type="text" id="daftar_komputer" class="form-control"  placeholder="Ketik nama komputer..." style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 4 5%27%3E%3Cpath fill=%27%23333%27 d=%27M2 0L0 2h4L2 0zm0 5L0 3h4l-2 2z%27/%3E%3C/svg%3E'); background-repeat:no-repeat; background-position:right 0.75rem center; background-size:8px 10px;">
@@ -84,6 +79,7 @@ $(document).ready(function(){
     validateFile('file1');
     validateFile('file2');
     validateFile('file3');
+    reset();
 
     let hardwareList = [];
     $.ajax({
@@ -105,6 +101,13 @@ $(document).ready(function(){
                         $(this).val(ui.item.label);
                         $('#id_hardware').val(ui.item.id);
                         return false;
+                    }
+                });
+
+                $('#daftar_komputer').on('input change blur', function() {
+                    let val = $(this).val().trim();
+                    if (!val) {
+                        $('#id_hardware').val(''); // reset jika input kosong
                     }
                 });
 
@@ -137,41 +140,13 @@ $(document).ready(function(){
                         return false;
                     }
                 });
-
-                $('#daftar_software').on('click', function(){
-                    $(this).autocomplete("search", "");
-                });
-            }
-        }
-    });
-
-
-    // === Dept Head ===
-    // 1. Load data dulu
-    let deptHeadList = []; // variabel di luar AJAX
-    $.ajax({
-        url: '/ticketings/getDeptHead',
-        type: 'POST',
-        dataType: 'json',
-        success: function (res) {
-            if (res.success) {
-                // isi variabel luar, jangan pakai const/let lagi
-                deptHeadList = res.data.depthead.map(u => ({
-                    label: u.nama_lengkap + ' (' + u.nama_position + ')',
-                    id: u.username
-                }));
-                // init autocomplete
-                $('#dept_head').autocomplete({ 
-                    minLength: 0,
-                    source: deptHeadList,
-                    select: function (event, ui) {
-                        $(this).val(ui.item.label);
-                        $('#dept_us').val(ui.item.id);
-                        return false;
+                $('#daftar_software').on('input change blur', function() {
+                    let val = $(this).val().trim();
+                    if (!val) {
+                        $('#id_software').val(''); // reset jika input kosong
                     }
                 });
-
-                $('#dept_head').on('click', function(){
+                $('#daftar_software').on('click', function(){
                     $(this).autocomplete("search", "");
                 });
             }
@@ -266,10 +241,12 @@ function reset() {
     $('#btnHardware').prop('disabled', false).removeClass('opacity-50');
     $('#tgl_permintaan').val('');
     $('#daftar_komputer').val('');
+    $('#id_hardware').val('');
+    $('#daftar_software').val('');
+    $('#id_software').val('');
     $('#deskripsi').val('');
     $('#kategori_klaim').val('');
     $('#kategori_manual').val('').hide();
-    $('#daftar_software').val('');
     $('#file1').val('');
     $('#file2').val('').prop('disabled', true);
     $('#file3').val('').prop('disabled', true);
@@ -326,14 +303,27 @@ function btnSubmit() {
     let id_software = $('#id_software').val();
     let deskripsi = $('#deskripsi').val();
     let kategoriKlaim = $('#kategori_klaim').val() === 'other' ? $('#kategori_manual').val() : $('#kategori_klaim').val();
-
+    console.log('id_software:', id_software, 'kategoriKlaim:', kategoriKlaim);
     // ==== Validasi input ====
     if (!jenisTicket) {setErrorFocus('#jenis_ticket'); Swal.fire('Perhatian', 'Silakan pilih jenis ticket terlebih dahulu.', 'warning'); return;}
     if (!tglPermintaan) {setErrorFocus('#tgl_permintaan'); Swal.fire('Perhatian', 'Tanggal permintaan wajib diisi.', 'warning'); return;}
-    if (jenisTicket === 'software' && !id_software) {setErrorFocus('#id_software'); Swal.fire('Perhatian', 'Silakan pilih software yang bermasalah.', 'warning'); return;}
-    if (jenisTicket === 'hardware') {
-        if (!id_hardware) {setErrorFocus('#id_hardware'); Swal.fire('Perhatian', 'Silakan pilih hardware yang bermasalah.', 'warning'); return;}
+    if (jenisTicket === 'software') {
+        if (!id_software) {
+            setErrorFocus('#daftar_software');
+            Swal.fire('Perhatian', 'Silakan pilih software yang bermasalah.', 'warning');
+            return;
+        }
+        if (!kategoriKlaim) {
+            setErrorFocus('#kategori_klaim');
+            Swal.fire('Perhatian', 'Kategori klaim wajib diisi.', 'warning');
+            return;
+        }
     }
+
+    if (jenisTicket === 'hardware') {
+        if (!id_hardware) {setErrorFocus('#daftar_komputer'); Swal.fire('Perhatian', 'Silakan pilih hardware yang bermasalah.', 'warning'); return;}
+    }
+    
 
     // ==== Tentukan item_ticket berdasarkan jenis_ticket ====
     let itemTicket = (jenisTicket === 'software') ? id_software : id_hardware;

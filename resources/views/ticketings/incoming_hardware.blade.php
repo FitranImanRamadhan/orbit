@@ -163,7 +163,7 @@
                           case 'open': badge = '<span class="badge bg-danger text-dark">Open</span>'; break;
                           case 'on_progress': badge = '<span class="badge bg-warning">On Progress</span>'; break;
                           case 'closed': badge = '<span class="badge bg-success">Closed</span>'; break;
-                          default: badge = '<span class="badge bg-secondary">'+ data +'</span>'; break;
+                          default: badge = '<span class="badge bg-secondary">'+ "-" +'</span>'; break;
                       }
                       return badge;
                   },
@@ -195,6 +195,10 @@
           $('#nama').val(rowData.nama_lengkap || '');
           $('#departemen').val(rowData.nama_departemen || '');
           $('#hardware_name').val(rowData.nama_hardware || '');
+          $('#jenis_problem').val(rowData.jenis_problem || '').trigger('change');
+          $('#counter_measure').val(rowData.counter_measure || '');
+          $('#jenis_pengecekan').val(rowData.jenis_pengecekan || '');
+          $('#next_plan').val(rowData.next_plan || '');
           $('#div_hardware').hide();
 
           // Kategori klaim mapping

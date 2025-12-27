@@ -186,6 +186,7 @@ Route::middleware('auth')->group(function () {
         });
 
         Route::get('/report/report_approval', [ReportController::class, 'report_approval'])->name('ticketing.report_approval');
+        Route::get('/report/export_excel', [ReportController::class, 'export_excel']);
         Route::post('/report/data_report_approval', [ReportController::class, 'data_report_approval'])->name('ticketing.data_report_approval');
         Route::get('/user_confirm_hardware', [TicketingController::class, 'user_confirm_hardware'])->name('ticketing.user_confirm_hardware');
         Route::post('/data_user_confirm_hardware', [TicketingController::class, 'data_user_confirm_hardware'])->name('ticketing.data_user_confirm_hardware');

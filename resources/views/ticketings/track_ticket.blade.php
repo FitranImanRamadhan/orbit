@@ -149,6 +149,7 @@ $(document).ready(function() {
                         case 'open': badge = '<span class="badge bg-danger text-dark">Open</span>'; break;
                         case 'on_progress': badge = '<span class="badge bg-warning">On_progress</span>'; break;
                         case 'closed': badge = '<span class="badge bg-success">Closed</span>'; break;
+                        case 'canceled': badge = '<span class="badge bg-secondary">Closed</span>'; break;
                         default: badge = '<span class="badge bg-secondary">'+ data +'</span>'; break;
                     }
                     return badge;

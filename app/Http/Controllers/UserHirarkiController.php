@@ -124,13 +124,15 @@ class UserHirarkiController extends Controller
             in_array($pos($row), [
                 'staff', 'data entry', 'operator', 'npd',
                 'programmer system', 'trouble shooting',
-                'operation exellent', 'administrator'
+                'operation exellent', 'administrator', 'system implementator'
             ]) &&
             !in_array($row->username, $usedLevel1)
         );
 
         $level2 = $usersDept->filter(fn($row) =>
-            $pos($row) === 'leader' &&
+            in_array($pos($row), [
+               'leader', 'leader implementator', 'leader trouble shooting'
+            ]) &&
             !in_array($row->username, $usedLevel2)
         );
 
@@ -316,7 +318,6 @@ class UserHirarkiController extends Controller
             'message' => 'Userhirarki berhasil dihapus'
         ]);
     }
-
 
 
 }
