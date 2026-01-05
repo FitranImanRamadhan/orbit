@@ -192,6 +192,11 @@ class UserController extends Controller
 
     public function create(Request $request)
     {
+        $forbiddenRoles = ['super_admin', 'developer'];
+        if (in_array(Auth::user()->user_akses, ['user', 'admin']) && in_array($request->user_akses, $forbiddenRoles)) {
+            abort(403, 'Akses tidak diizinkan');
+        }
+
         $request->validate([
             'nik'            => [
                 'required',
@@ -241,6 +246,11 @@ class UserController extends Controller
 
     public function update(Request $request, $id_user)
 {
+    $forbiddenRoles = ['super_admin', 'developer'];
+        if (in_array(Auth::user()->user_akses, ['user', 'admin']) && in_array($request->user_akses, $forbiddenRoles)) {
+            abort(403, 'Akses tidak diizinkan');
+        }
+        
     $user = User::where('id_user', $id_user)->firstOrFail();
 
     // Simpan username lama
@@ -278,72 +288,6 @@ class UserController extends Controller
     }
 
     $user->save();
-
-    // 🔥 Update semua kolom terkait username di tbl_tickets
-    // $hirarkis = DB::table('user_hirarkis')
-    //     ->where('level2', $oldUsername)
-    //     ->orWhere('level3', $oldUsername)
-    //     ->orWhere('level4', $oldUsername)
-    //     ->orWhereJsonContains('level1', $oldUsername)
-    //     ->get();
-
-    // foreach ($hirarkis as $h) {
-
-    //     // --- Update level1 (JSON Array) ---
-    //     $level1 = json_decode($h->level1, true) ?? [];
-
-    //     // Replace oldUsername → new username
-    //     $level1 = array_map(function ($val) use ($oldUsername, $user) {
-    //         return trim(strtolower($val)) === trim(strtolower($oldUsername))
-    //             ? $user->username
-    //             : $val;
-    //     }, $level1);
-
-    //     // Update ke DB
-    //     DB::table('user_hirarkis')
-    //         ->where('id_hirarki', $h->id_hirarki)
-    //         ->update([
-    //             'level1' => json_encode($level1),
-    //             'level2' => trim(strtolower($h->level2)) === trim(strtolower($oldUsername)) ? $user->username : $h->level2,
-    //             'level3' => trim(strtolower($h->level3)) === trim(strtolower($oldUsername)) ? $user->username : $h->level3,
-    //             'level4' => trim(strtolower($h->level4)) === trim(strtolower($oldUsername)) ? $user->username : $h->level4,
-    //         ]);
-    // }
-
-
-
-    // // ===============================
-    // // UPDATE DI TBL_TICKETS — version BENAR
-    // // ===============================
-    // DB::table('tbl_tickets')
-    // ->where('user_create', $oldUsername)
-    // ->update(['user_create' => $user->username]);
-
-    // DB::table('tbl_tickets')
-    //     ->where('approver_level2', $oldUsername)
-    //     ->update(['approver_level2' => $user->username]);
-
-    // DB::table('tbl_tickets')
-    //     ->where('approver_level3', $oldUsername)
-    //     ->update(['approver_level3' => $user->username]);
-
-    // DB::table('tbl_tickets')
-    //     ->where('approver_level4', $oldUsername)
-    //     ->update(['approver_level4' => $user->username]);
-
-    // DB::table('tbl_tickets')
-    //     ->where('approver_depthead', $oldUsername)
-    //     ->update(['approver_depthead' => $user->username]);
-
-    // DB::table('tbl_tickets')
-    //     ->where('it_start', $oldUsername)
-    //     ->update(['it_start' => $user->username]);
-
-    // DB::table('tbl_tickets')
-    //     ->where('it_finish', $oldUsername)
-    //     ->update(['it_finish' => $user->username]);
-
-
 
     return response()->json([
         'success' => true,

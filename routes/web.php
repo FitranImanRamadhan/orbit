@@ -40,7 +40,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/notifications/check-redirect', [NotificationController::class, 'checkRedirect']);
     });
 
-    Route::middleware(['auth', 'akses:adminOrSuperIT'])->group(function () {
+    Route::middleware(['auth', 'akses:developer,superAdmin'])->group(function () {
         // ========================================MASTER=======================================================
         Route::prefix('plants')->group(function () {
             Route::get('/', [PlantController::class, 'index'])->name('plants.index');
@@ -87,7 +87,7 @@ Route::middleware('auth')->group(function () {
         });
     });
 
-    Route::middleware(['auth', 'akses:adminIT,isImplementator'])->group(function () {
+    Route::middleware(['auth', 'akses:developer,superAdmin,admin'])->group(function () {
         Route::prefix('userHirarkis')->group(function () {
             Route::get('/', [UserHirarkiController::class, 'index'])->name('userHirarkis.index');
             Route::post('/data', [UserHirarkiController::class, 'data'])->name('userHirarkis.data');
@@ -101,7 +101,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('users')->group(function () {
-        Route::middleware(['auth', 'akses:adminOrSuperIT'])->group(function () {
+        Route::middleware(['auth', 'akses:developer,superAdmin,admin'])->group(function () {
             Route::get('/', [UserController::class, 'index'])->name('users.index');
             Route::post('/data', [UserController::class, 'data'])->name('users.data');
             Route::post('/data_dblink', [UserController::class, 'data_dblink'])->name('users.data_dblink');
@@ -127,20 +127,20 @@ Route::middleware('auth')->group(function () {
         Route::post('/getDeptHead', [TicketingController::class, 'getDeptHead'])->name('ticketings.getDeptHead');
 
         //create
-        // Route::middleware(['auth', 'akses:adminIT,superNonIT,userNonIT'])->group(function () {
+        // Route::middleware(['auth', 'akses:developer,admin,userNonIT'])->group(function () {
             Route::get('/create_ticket', [TicketingController::class, 'create_ticket'])->name('ticketing.create_ticket');
             Route::post('/create_ticket_proses', [TicketingController::class, 'create_ticket_proses'])->name('ticketing.create_ticket_proses');
         // });
 
         //approval
-        Route::middleware(['auth', 'akses:adminIT,superNonIT,superIT,userNonIT'])->group(function () {
+        Route::middleware(['auth', 'akses:developer,admin,superAdmin,userNonIT'])->group(function () {
             Route::get('/approval', [TicketingController::class, 'approval'])->name('ticketing.approval');
             Route::post('/data_approval', [TicketingController::class, 'data_approval'])->name('ticketing.data_approval');
             Route::post('/approval_proses', [TicketingController::class, 'approval_proses'])->name('ticketing.approval_proses');
         });
 
         //track
-        Route::middleware(['auth', 'akses:adminIT,superNonIT,userNonIT'])->group(function () {
+        Route::middleware(['auth', 'akses:developer,admin,userNonIT'])->group(function () {
             Route::get('/track_ticket', [TicketingController::class, 'track_ticket'])->name('ticketing.track_ticket');
             Route::post('/data_track', [TicketingController::class, 'data_track'])->name('ticketing.data_track');
         });
@@ -152,7 +152,7 @@ Route::middleware('auth')->group(function () {
         });
 
         //incoming hw
-        Route::middleware(['auth', 'akses:adminIT,isTS'])->group(function () {
+        Route::middleware(['auth', 'akses:developer,isTS'])->group(function () {
             Route::get('/incoming_hardware', [TicketingController::class, 'incoming_hardware'])->name('ticketing.incoming_hardware');
             Route::post('/data_incoming_hardware', [TicketingController::class, 'data_incoming_hardware'])->name('ticketing.data_incoming_hardware');
             Route::post('/hw_start_proses', [TicketingController::class, 'hw_start_proses'])->name('ticketing.hw_start_proses');
@@ -160,24 +160,27 @@ Route::middleware('auth')->group(function () {
         });
 
         //incoming sw
-        Route::middleware(['auth', 'akses:adminIT,isImplementator'])->group(function () {
+        Route::middleware(['auth', 'akses:developer,isImplementator'])->group(function () {
             Route::get('/incoming_software', [TicketingController::class, 'incoming_software'])->name('ticketing.incoming_software');
             Route::post('/data_incoming_software', [TicketingController::class, 'data_incoming_software'])->name('ticketing.data_incoming_software');
             Route::post('/sw_start_proses', [TicketingController::class, 'sw_start_proses'])->name('ticketing.sw_start_proses');
             Route::post('/sw_finish_proses', [TicketingController::class, 'sw_finish_proses'])->name('ticketing.sw_finish_proses');
+            Route::get('/incoming-software/pdf/preview',[TicketingController::class, 'incoming_software_pdf']);
+
         });
 
         //report sw
-        Route::middleware(['auth', 'akses:adminIT,isImplementator'])->group(function () {
+        Route::middleware(['auth', 'akses:developer,isImplementator'])->group(function () {
             Route::get('/report/report_ticket_software', [ReportController::class, 'report_ticket_software'])->name('ticketing.report_ticket_software');
             Route::post('/data_report_software', [TicketingController::class, 'data_report_software'])->name('ticketing.data_report_software');
             Route::post('/report/data_report_ticket_software', [ReportController::class, 'data_report_ticket_software'])->name('ticketing.data_report_ticket_software');
             Route::get('/report/chart_ticket_software', function () {return view('ticketings.report.chart_ticket_software');});
             Route::post('/report/data_chart_ticket_software', [ReportController::class, 'data_chart_ticket_software'])->name('ticketing.data_chart_ticket_software');
+
         });
 
         //report hw
-        Route::middleware(['auth', 'akses:adminIT,isTS'])->group(function () {
+        Route::middleware(['auth', 'akses:developer,isTS'])->group(function () {
             Route::get('/report/report_ticket_hardware', [ReportController::class, 'report_ticket_hardware'])->name('ticketing.report_ticket_hardware');
             Route::post('/report/data_report_ticket_hardware', [ReportController::class, 'data_report_ticket_hardware'])->name('ticketing.data_report_ticket_hardware');
             Route::get('/report/chart_ticket_hardware', function () {return view('ticketings.report.chart_ticket_hardware');});
@@ -185,9 +188,11 @@ Route::middleware('auth')->group(function () {
             Route::post('/report/create_report_ticket', [ReportController::class, 'create_report_ticket'])->name('ticketing.create_report_ticket');
         });
 
-        Route::get('/report/report_approval', [ReportController::class, 'report_approval'])->name('ticketing.report_approval');
-        Route::get('/report/export_excel', [ReportController::class, 'export_excel']);
-        Route::post('/report/data_report_approval', [ReportController::class, 'data_report_approval'])->name('ticketing.data_report_approval');
+        Route::middleware(['auth', 'akses:developer,superAdmin'])->group(function () {
+            Route::get('/report/report_approval', [ReportController::class, 'report_approval'])->name('ticketing.report_approval');
+            Route::get('/report/export_excel', [ReportController::class, 'export_excel']);
+            Route::post('/report/data_report_approval', [ReportController::class, 'data_report_approval'])->name('ticketing.data_report_approval');
+        });
         Route::get('/user_confirm_hardware', [TicketingController::class, 'user_confirm_hardware'])->name('ticketing.user_confirm_hardware');
         Route::post('/data_user_confirm_hardware', [TicketingController::class, 'data_user_confirm_hardware'])->name('ticketing.data_user_confirm_hardware');
         Route::post('/proses_user_confirm_hardware', [TicketingController::class, 'proses_user_confirm_hardware'])->name('ticketing.proses_user_confirm_hardware');

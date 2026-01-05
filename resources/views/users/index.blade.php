@@ -17,6 +17,7 @@
                 <th style="text-align:center;">Plant</th>
                 <th style="text-align:center;">Departemen</th>
                 <th style="text-align:center;">Position</th>
+                <th style="text-align:center;">Username</th>
                 <th style="text-align:center;">Aksi</th>
             </tr>
         </thead>
@@ -73,7 +74,8 @@
                                     <select class="form-control form-control-sm shadow-sm" id="user_akses" name="user_akses" required>
                                         <option value="" selected disabled>-- Pilih Akses --</option>
                                         <option value="user">User</option>
-                                        <option value="super_user">Super User</option>
+                                        <option value="admin">Admin</option>
+                                        <option value="super_admin">Super Admin</option>
                                     </select>
                                 </div>
                                 <hr class="my-2">
@@ -133,9 +135,25 @@ $(document).ready(function() {
     let mode = '';
     let nama_departemen = "{{ Auth::user()->nama_departemen }}";
     let user_akses = "{{ Auth::user()->user_akses }}";
+    const loginRole = "{{ Auth::user()->user_akses }}";
+    // Mapping: role login → role yang boleh dibuat
+    const roleMap = {
+        user: ['user'],
+        admin: ['user', 'admin'],
+        super_admin: ['user', 'admin', 'super_admin'],
+        developer: ['user', 'admin', 'super_admin'] // FULL tapi tidak bisa buat developer
+    };
+
+    const allowedRoles = roleMap[loginRole] || [];
+    $('#user_akses option').each(function () {
+        const val = $(this).val();
+        if (val && !allowedRoles.includes(val)) {
+            $(this).remove();
+        }
+    });
 
 // // Cek kondisi
-// if (user_akses === 'administrator') {
+// if (user_akses === 'developer') {
 //     $('#div_username').show(); // tampilkan
 // } else {
 //     $('#div_username').hide(); // sembunyikan
@@ -154,6 +172,7 @@ $(document).ready(function() {
             { data: 'nama_plant', name: 'nama_plant', className: 'text-start' },
             { data: 'nama_departemen', name: 'nama_departemen', className: 'text-start' },
             { data: 'nama_position', name: 'nama_position', className: 'text-start' },
+            { data: 'username', name: 'username', className: 'text-start' },
             { data: null, render: function(data, type, row) {
                         return `
                           <button class="btn btn-sm btn-warning me-1 btn-edit">Edit</button>
@@ -262,18 +281,18 @@ function btnEdit(data) {
     const loginAkses = $('#login_user_akses').val().toLowerCase();      
     const targetAkses = data.user_akses; 
     console.log(targetAkses);                
-    if (targetAkses === 'administrator') {
-        Swal.fire('Tidak bisa edit!', 'Administrator tidak boleh diedit.', 'warning');
+    if (targetAkses === 'developer') {
+        Swal.fire('Tidak bisa edit!', 'Developer tidak boleh diedit.', 'warning');
         return;
     }
     if (loginAkses === 'user') {
-        if (targetAkses === 'super_user' || targetAkses === 'administrator') {
+        if (targetAkses === 'super_admin' || targetAkses === 'developer') {
             Swal.fire('Akses ditolak!', 'User tidak boleh mengedit role ini.', 'warning');
             return;
         }
     }
-    if (loginAkses === 'super user' && targetAkses === 'administrator') {
-        Swal.fire('Akses ditolak!', 'Super User tidak boleh mengedit Administrator.', 'warning');
+    if (loginAkses === 'super_admin' && targetAkses === 'developer') {
+        Swal.fire('Akses ditolak!', 'Super User tidak boleh mengedit Developer.', 'warning');
         return;
     }
     $('#usermodalLabel').text('Edit User');
@@ -456,8 +475,8 @@ function loadPlant(callback) {
 
     function btnpw() {
         const loginAkses = $('#login_user_akses').val().toLowerCase();
-        if (mode === 'edit' && loginAkses !== 'administrator') {
-            Swal.fire('Akses ditolak', 'Hanya Administrator yang bisa mengganti password.', 'error');
+        if (mode === 'edit' && loginAkses !== 'developer') {
+            Swal.fire('Akses ditolak', 'Hanya Developer yang bisa mengganti password.', 'error');
             return;
         }
 

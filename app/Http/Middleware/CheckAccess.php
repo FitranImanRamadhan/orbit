@@ -15,25 +15,24 @@ class CheckAccess
         $isIT  = ($user->departemen_id == 3);
         $isNonIT = !$isIT;
 
-        $isAdminIT          = ($isIT && $user->user_akses === 'administrator');
-        $isSuperIT          = ($isIT && $user->user_akses === 'super_user');
-        $isImplementator    = ($isIT && $user->user_akses === 'super_user' && in_array($user->position_id, [34, 37, 1006]));
-        $isTS               = ($isIT && $user->user_akses === 'super_user' && in_array($user->position_id, [32, 1007]));
-        $isleaderimp        = ($isIT && $user->user_akses === 'super_user' && in_array($user->position_id, [1006]));
-        $isleaderts         = ($isIT && $user->user_akses === 'super_user' && in_array($user->position_id, [1007]));
+        $isDev          = ($isIT && $user->user_akses === 'developer');
+        $isSuperAdmin          = ($isIT && $user->user_akses === 'super_admin');
+        $isImplementator    = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [34, 37, 1006]));
+        $isTS               = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [32, 1007]));
+        $isleaderimp        = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1006]));
+        $isleaderts         = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1007]));
         $isUserNonIT        = (($isNonIT && $user->user_akses === 'user') || $isIT && $user->user_akses === 'user');
-        $isSuperNonIT       = ($isNonIT && $user->user_akses === 'super_user');
+        $isAdmin       = ($isNonIT && $user->user_akses === 'super_admin');
 
         // List mapping
         $mapping = [
-            'adminIT'         => $isAdminIT,
-            'superIT'         => $isSuperIT,
+            'developer'         => $isDev,
+            'superAdmin'         => $isSuperAdmin,
             'isImplementator' => $isImplementator,
             'isTS'            => $isTS,
             'userNonIT'       => $isUserNonIT,
-            'superNonIT'      => $isSuperNonIT,
-            'adminOrSuperIT'  => ($isAdminIT || $isSuperIT),
-            'all'             => ($isAdminIT || $isSuperIT || $isUserNonIT || $isSuperNonIT),
+            'admin'      => $isAdmin,
+            'all'             => ($isDev || $isSuperAdmin || $isUserNonIT || $isAdmin),
         ];
 
         // Cek salah satu roles diterima

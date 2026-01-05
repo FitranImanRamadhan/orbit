@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Hardware;
 use App\Models\Software;
 use App\Helpers\NotificationHelper;
+use Mpdf\Mpdf;
 
 class TicketingController extends Controller
 {
@@ -1012,4 +1013,35 @@ class TicketingController extends Controller
             'message' => 'Konfirmasi hardware berhasil disimpan'
         ]);
     }
+
+    public function incoming_software_pdf(Request $request)
+{
+    $request->validate([
+        'id'   => 'required|integer',
+        'mode' => 'nullable|in:preview,download'
+    ]);
+
+    $data = Ticketing::where('id', $request->id)
+        ->where('jenis_ticket', 'software')
+        ->firstOrFail();
+
+    $html = view('ticketings.incoming_software_pdf', compact('data'))->render();
+
+    $mpdf = new \Mpdf\Mpdf([
+        'mode'   => 'utf-8',
+        'format' => 'A4',
+    ]);
+
+    $mpdf->WriteHTML($html);
+
+    // default preview
+    $outputMode = $request->mode === 'download' ? 'D' : 'I';
+
+    return response(
+        $mpdf->Output('incoming-software.pdf', $outputMode),
+        200,
+        ['Content-Type' => 'application/pdf']
+    );
+}
+
 }

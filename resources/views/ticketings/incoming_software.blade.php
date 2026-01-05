@@ -127,6 +127,38 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="previewPdfModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="pdfModalTitle">Preview Form Claim</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body p-0">
+                <iframe
+                    id="iframePreviewPdf"
+                    src=""
+                    width="100%"
+                    height="600"
+                    style="border:none;">
+                </iframe>
+            </div>
+
+            <!-- INI YANG TADI BELUM ADA -->
+            <div class="modal-footer">
+                <a href="#" id="btnDownloadPdf" class="btn btn-success">
+                    <i class="bi bi-download"></i> Download PDF
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
 @endsection
 
 @section('scripts')
@@ -183,16 +215,24 @@
                         },
                         className: 'text-center'
                     }
-                    // ,
-                    // { data: null, render: function(data, type, row) {
-                    //             return `
-                    //               <button class="btn btn-sm btn-warning me-1 btn-preview rounded">Preview<i class="bi bi-search ms-1"></i></button>
-                    //             `;
-                    //       },orderable: false,
-                    //         searchable: false,
-                    //         className: "text-left",
-                    //         width: "100px"
-                    // }
+                    ,
+                    {
+                        data: null,
+                        render: function (data, type, row) {
+                            return `
+                                <button 
+                                    class="btn btn-sm btn-warning me-1 btn-preview rounded"
+                                    data-id="${row.id}">
+                                    Preview <i class="bi bi-search ms-1"></i>
+                                </button>
+                            `;
+                        },
+                        orderable: false,
+                        searchable: false,
+                        className: "text-left",
+                        width: "100px"
+                    }
+
                 ]
             });
             $('#tabel tbody').on('dblclick', 'tr', function() {
@@ -272,6 +312,38 @@
                 startTime = null;
                 finishTime = null;
             });
+
+            let currentPdfId = null;
+
+$('#tabel').on('click', '.btn-preview', function () {
+    currentPdfId = $(this).data('id');
+    if (!currentPdfId) return alert('ID tidak ditemukan');
+
+    $('#iframePreviewPdf').attr(
+        'src',
+        `/ticketings/incoming-software/pdf/preview?id=${currentPdfId}&mode=preview`
+    );
+
+    new bootstrap.Modal('#previewPdfModal').show();
+});
+
+$('#btnDownloadPdf').on('click', function () {
+    if (!currentPdfId) return;
+
+    window.open(
+        `/ticketings/incoming-software/pdf/preview?id=${currentPdfId}&mode=download`,
+        '_blank'
+    );
+});
+
+$('#previewPdfModal').on('hidden.bs.modal', function () {
+    $('#iframePreviewPdf').attr('src', '');
+    currentPdfId = null;
+});
+
+
+
+
         });
 
         function applyFilter() {

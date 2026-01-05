@@ -6,15 +6,15 @@
 
     // dd(Auth::user());
     
-    $isAdminIT          = ($isIT && $user->user_akses === 'administrator');
-    $isSuperIT          = ($isIT && $user->user_akses === 'super_user');
-    $isImplementator    = ($isIT && $user->user_akses === 'super_user' && in_array($user->position_id, [34, 37, 1006]));
-    $isTS               = ($isIT && $user->user_akses === 'super_user' && in_array($user->position_id, [32, 1007]));
-    $isleaderimp        = ($isIT && $user->user_akses === 'super_user' && in_array($user->position_id, [1006]));
-    $isleaderts         = ($isIT && $user->user_akses === 'super_user' && in_array($user->position_id, [1007]));
-    $isTS               = ($isIT && $user->user_akses === 'super_user' && in_array($user->position_id, [32, 1007]));
-    $isUserNonIT        = (($isNonIT && $user->user_akses === 'user') || ($isIT && $user->user_akses === 'user'));
-    $isSuperNonIT       = ($isNonIT && $user->user_akses === 'super_user');
+    $isDev          = ($isIT && $user->user_akses === 'developer');
+    $isSuperAdmin          = ($isIT && $user->user_akses === 'super_admin');
+    $isImplementator    = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [34, 37, 1006]));
+    $isTS               = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [32, 1007]));
+    $isleaderimp        = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1006]));
+    $isleaderts         = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1007]));
+    $isTS               = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [32, 1007]));
+    $isUserNonIT        = ($isNonIT && $user->user_akses === 'user');
+    $isAdmin       = ($isNonIT && $user->user_akses === 'super_admin');
 @endphp
 
 
@@ -30,7 +30,7 @@
 
     <div class="menu-bar">
             <ul class="bottom-content list-unstyled">
-                @if($isAdminIT || $isSuperIT || $isUserNonIT || $isSuperNonIT)
+                @if($isDev || $isSuperAdmin || $isUserNonIT || $isAdmin)
                 <li class="nav-item">
                     <a href="{{ route('dashboard') }}" class="nav-link d-flex align-items-center {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                         <i class="fa fa-home icon"></i><span class="text nav-text">Home</span>
@@ -38,7 +38,7 @@
                 </li>
                 @endif
                 
-                @if($isAdminIT || $isSuperIT)
+                @if($isDev || $isSuperAdmin)
                     <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center {{
                         request()->routeIs('plants.*') || request()->routeIs('departemens.*') || request()->routeIs('positions.*') || request()->routeIs('users.*') ||
@@ -57,7 +57,7 @@
                 </li>
                 @endif
                 
-                @if($isAdminIT || $isImplementator)
+                @if($isDev || $isImplementator)
                 <li class="nav-item">
                     <a href="{{ route('userHirarkis.index') }}" class="nav-link d-flex align-items-center {{ request()->routeIs('userHirarkis.index') ? 'active' : '' }}">
                         <i class="fa fa-user-cog icon"></i><span class="text nav-text">Setting Approval<br>Form Klaim</span>
@@ -65,7 +65,7 @@
                 </li>
                 @endif
 
-                {{-- @if($isAdminIT || $isUserNonIT || $isSuperNonIT) --}}
+                {{-- @if($isDev || $isUserNonIT || $isAdmin) --}}
                 <li class="nav-item">
                     <a href="{{ route('ticketing.create_ticket') }}" class="nav-link d-flex align-items-center {{ request()->routeIs('ticketing.create_ticket') ? 'active' : '' }}">
                         <i class="fa fa-ticket icon"></i><span class="text nav-text">Create Ticket</span>
@@ -73,7 +73,7 @@
                 </li>
                 {{-- @endif --}}
                 
-                @if($isAdminIT || $isSuperNonIT || $isUserNonIT)
+                @if($isDev || $isAdmin || $isUserNonIT)
                 <li class="nav-item">
                     <a href="{{ route('ticketing.approval') }}"
                     class="nav-link d-flex align-items-center {{ request()->routeIs('ticketing.approval') ? 'active' : '' }}">
@@ -83,7 +83,7 @@
                 </li>
                 @endif
 
-                @if($isAdminIT || $isSuperNonIT || $isUserNonIT)
+                @if($isDev || $isAdmin || $isUserNonIT)
                 <li class="nav-item">
                     <a href="{{ route('ticketing.user_confirm_hardware') }}"
                     class="nav-link d-flex align-items-center {{ request()->routeIs('ticketing.user_confirm_hardware') ? 'active' : '' }}">
@@ -94,7 +94,7 @@
                 @endif
 
                             
-                @if($isAdminIT || $isSuperNonIT || $isUserNonIT )
+                @if($isDev || $isAdmin || $isUserNonIT )
                    <li class="nav-item">
                     <a href="{{ route('ticketing.track_ticket') }}" class="nav-link d-flex align-items-center {{ request()->routeIs('ticketing.track_ticket') ? 'active' : '' }}">
                         <i class="fa fa-search icon"></i><span class="text nav-text">Track My Ticket</span>
@@ -102,7 +102,7 @@
                 </li> 
                 @endif
                 
-                @if($isAdminIT || $isSuperIT || $isUserNonIT || $isSuperNonIT)
+                @if($isDev || $isSuperAdmin || $isUserNonIT || $isAdmin)
                 <li class="nav-item">
                     <a href="{{ route('ticketing.queue_ticket') }}" class="nav-link d-flex align-items-center {{ request()->routeIs('ticketing.queue_ticket') ? 'active' : '' }}">
                         <i class="fa fa-list icon"></i><span class="text nav-text">Ticket Queue</span>
@@ -110,35 +110,39 @@
                 </li>
                 @endif
 
-                @if($isAdminIT || $isSuperIT)
+                @if($isDev || $isSuperAdmin)
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center {{ request()->routeIs('ticketing.incoming_software') || request()->routeIs('ticketing.incoming_hardware') ? 'active' : '' }}" href="#" id="incomingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fa fa-inbox icon"></i><span class="text nav-text">Incoming Ticket</span>
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="incomingDropdown">
-                        @if($isAdminIT || $isImplementator)
+                        @if($isDev || $isImplementator)
                             <li><a class="dropdown-item {{ request()->routeIs('ticketing.incoming_software') ? 'active' : '' }}" href="{{ route('ticketing.incoming_software') }}">Software</a></li>
                         @endif
-                        @if($isAdminIT || $isTS)
+                        @if($isDev || $isTS)
                             <li><a class="dropdown-item {{ request()->routeIs('ticketing.incoming_hardware') ? 'active' : '' }}" href="{{ route('ticketing.incoming_hardware') }}">Hardware</a></li>
                         @endif
                     </ul>
                 </li>
                 @endif
 
-                @if($isAdminIT || $isSuperIT)
+                @if($isDev || $isSuperAdmin)
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center {{ request()->routeIs('ticketing.report_ticket_software') || request()->routeIs('ticketing.report_ticket_hardware') ? 'active' : '' }}" href="#" id="reportDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fa fa-chart-bar icon"></i><span class="text nav-text">Report</span>
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="reportDropdown">
+                        @if($isDev || $isImplementator)
                         <li><a class="dropdown-item" href="{{ route('ticketing.report_ticket_software') }}">Software</a></li>
+                        @endif
+                        @if($isDev || $isTS)
                         <li><a class="dropdown-item" href="{{ route('ticketing.report_ticket_hardware') }}">Hardware</a></li>
+                        @endif
                     </ul>
                 </li>
                 @endif
 
-                @if($isAdminIT || $isSuperIT)
+                @if($isDev || $isSuperAdmin)
                 <li class="nav-item">
                     <a href="{{ route('ticketing.report_approval') }}" class="nav-link d-flex align-items-center {{ request()->routeIs('ticketing.report_approval') ? 'active' : '' }}">
                         <i class="fa fa-list icon"></i><span class="text nav-text">Report Approval</span>
