@@ -6,15 +6,14 @@
 
     // dd(Auth::user());
     
-    $isDev          = ($isIT && $user->user_akses === 'developer');
-    $isSuperAdmin          = ($isIT && $user->user_akses === 'super_admin');
+    $isDev              = ($isIT && $user->user_akses === 'developer');
+    $isSuperAdmin       = ($isIT && $user->user_akses === 'super_admin');
     $isImplementator    = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [34, 37, 1006]));
     $isTS               = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [32, 1007]));
     $isleaderimp        = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1006]));
     $isleaderts         = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1007]));
-    $isTS               = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [32, 1007]));
     $isUserNonIT        = ($isNonIT && $user->user_akses === 'user');
-    $isAdmin       = ($isNonIT && $user->user_akses === 'super_admin');
+    $isAdmin            = ($isNonIT && $user->user_akses === 'admin');
 @endphp
 
 
@@ -38,7 +37,7 @@
                 </li>
                 @endif
                 
-                @if($isDev || $isSuperAdmin)
+                @if($isDev || $isAdmin || $isSuperAdmin)
                     <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center {{
                         request()->routeIs('plants.*') || request()->routeIs('departemens.*') || request()->routeIs('positions.*') || request()->routeIs('users.*') ||
@@ -71,7 +70,7 @@
                         <i class="fa fa-ticket icon"></i><span class="text nav-text">Create Ticket</span>
                     </a>
                 </li>
-                {{-- @endif --}}
+                {{-- @endif --}} 
                 
                 @if($isDev || $isAdmin || $isUserNonIT)
                 <li class="nav-item">

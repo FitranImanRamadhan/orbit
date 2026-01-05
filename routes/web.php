@@ -40,7 +40,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/notifications/check-redirect', [NotificationController::class, 'checkRedirect']);
     });
 
-    Route::middleware(['auth', 'akses:developer,superAdmin'])->group(function () {
+    Route::middleware(['auth', 'akses:developer,superAdmin,admin'])->group(function () {
         // ========================================MASTER=======================================================
         Route::prefix('plants')->group(function () {
             Route::get('/', [PlantController::class, 'index'])->name('plants.index');
@@ -71,6 +71,8 @@ Route::middleware('auth')->group(function () {
             Route::post('/update/{id}', [MstTicketController::class, 'update'])->name('tickets.update');
             Route::delete('delete/{id}', [MstTicketController::class, 'destroy'])->name('tickets.destroy');
         });
+    });
+    Route::middleware(['auth', 'akses:developer,superAdmin'])->group(function () {
         Route::prefix('hardwares')->group(function () {
             Route::get('/', [HardwareController::class, 'index'])->name('hardwares.index');
             Route::post('/data', [HardwareController::class, 'data'])->name('hardwares.data');
@@ -86,6 +88,7 @@ Route::middleware('auth')->group(function () {
             Route::delete('/delete/{id}', [SoftwareController::class, 'destroy'])->name('softwares.destroy');
         });
     });
+
 
     Route::middleware(['auth', 'akses:developer,superAdmin,admin'])->group(function () {
         Route::prefix('userHirarkis')->group(function () {
@@ -112,11 +115,11 @@ Route::middleware('auth')->group(function () {
             Route::post('/update/{id_user}', [UserController::class, 'update'])->name('users.update');
             Route::delete('delete/{id}', [UserController::class, 'destroy'])->name('users.destroy');
         });
-        
-            Route::get('/profile', [UserController::class, 'profile'])->name('profile'); // tampilkan halaman profile
-            Route::post('/profile/data', [UserController::class, 'profiledata'])->name('profile.data');
-            Route::post('/profile/update', [UserController::class, 'updateProfile'])->name('profile.update'); // update profile
-       
+
+        Route::get('/profile', [UserController::class, 'profile'])->name('profile'); // tampilkan halaman profile
+        Route::post('/profile/data', [UserController::class, 'profiledata'])->name('profile.data');
+        Route::post('/profile/update', [UserController::class, 'updateProfile'])->name('profile.update'); // update profile
+
     });
 
     // =======================================TRANSAKSI=======================================================
@@ -128,8 +131,8 @@ Route::middleware('auth')->group(function () {
 
         //create
         // Route::middleware(['auth', 'akses:developer,admin,userNonIT'])->group(function () {
-            Route::get('/create_ticket', [TicketingController::class, 'create_ticket'])->name('ticketing.create_ticket');
-            Route::post('/create_ticket_proses', [TicketingController::class, 'create_ticket_proses'])->name('ticketing.create_ticket_proses');
+        Route::get('/create_ticket', [TicketingController::class, 'create_ticket'])->name('ticketing.create_ticket');
+        Route::post('/create_ticket_proses', [TicketingController::class, 'create_ticket_proses'])->name('ticketing.create_ticket_proses');
         // });
 
         //approval
@@ -165,8 +168,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/data_incoming_software', [TicketingController::class, 'data_incoming_software'])->name('ticketing.data_incoming_software');
             Route::post('/sw_start_proses', [TicketingController::class, 'sw_start_proses'])->name('ticketing.sw_start_proses');
             Route::post('/sw_finish_proses', [TicketingController::class, 'sw_finish_proses'])->name('ticketing.sw_finish_proses');
-            Route::get('/incoming-software/pdf/preview',[TicketingController::class, 'incoming_software_pdf']);
-
+            Route::get('/incoming-software/pdf/preview', [TicketingController::class, 'incoming_software_pdf']);
         });
 
         //report sw
@@ -174,16 +176,19 @@ Route::middleware('auth')->group(function () {
             Route::get('/report/report_ticket_software', [ReportController::class, 'report_ticket_software'])->name('ticketing.report_ticket_software');
             Route::post('/data_report_software', [TicketingController::class, 'data_report_software'])->name('ticketing.data_report_software');
             Route::post('/report/data_report_ticket_software', [ReportController::class, 'data_report_ticket_software'])->name('ticketing.data_report_ticket_software');
-            Route::get('/report/chart_ticket_software', function () {return view('ticketings.report.chart_ticket_software');});
+            Route::get('/report/chart_ticket_software', function () {
+                return view('ticketings.report.chart_ticket_software');
+            });
             Route::post('/report/data_chart_ticket_software', [ReportController::class, 'data_chart_ticket_software'])->name('ticketing.data_chart_ticket_software');
-
         });
 
         //report hw
         Route::middleware(['auth', 'akses:developer,isTS'])->group(function () {
             Route::get('/report/report_ticket_hardware', [ReportController::class, 'report_ticket_hardware'])->name('ticketing.report_ticket_hardware');
             Route::post('/report/data_report_ticket_hardware', [ReportController::class, 'data_report_ticket_hardware'])->name('ticketing.data_report_ticket_hardware');
-            Route::get('/report/chart_ticket_hardware', function () {return view('ticketings.report.chart_ticket_hardware');});
+            Route::get('/report/chart_ticket_hardware', function () {
+                return view('ticketings.report.chart_ticket_hardware');
+            });
             Route::post('/report/data_chart_ticket_hardware', [ReportController::class, 'data_chart_ticket_hardware'])->name('ticketing.data_chart_ticket_hardware');
             Route::post('/report/create_report_ticket', [ReportController::class, 'create_report_ticket'])->name('ticketing.create_report_ticket');
         });

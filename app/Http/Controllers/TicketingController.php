@@ -14,6 +14,7 @@ use App\Models\Hardware;
 use App\Models\Software;
 use App\Helpers\NotificationHelper;
 use Mpdf\Mpdf;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class TicketingController extends Controller
 {
@@ -1015,33 +1016,201 @@ class TicketingController extends Controller
     }
 
     public function incoming_software_pdf(Request $request)
-{
-    $request->validate([
-        'id'   => 'required|integer',
-        'mode' => 'nullable|in:preview,download'
-    ]);
+    {
+        $request->validate([
+            'id'   => 'required|integer',
+            'mode' => 'nullable|in:preview,download'
+        ]);
 
-    $data = Ticketing::where('id', $request->id)
-        ->where('jenis_ticket', 'software')
+        $data = Ticketing::from('tbl_tickets as a')
+        ->join('users as b', 'b.username', '=', 'a.user_create')
+        ->join('users as c', 'c.username', '=', 'a.it_finish')
+        ->leftJoin('softwares as d', 'a.item_ticket', '=', 'd.id_software')
+        ->leftJoin('plants as e', 'e.id_plant', '=', 'b.plant_id')          // plant pemohon
+        ->leftJoin('departemens as f', 'f.id_departemen', '=', 'b.departemen_id') // departemen pemohon
+        ->leftJoin('positions as g', 'g.id_position', '=', 'b.position_id')       // posisi pemohon
+        ->leftJoin('plants as h', 'h.id_plant', '=', 'c.plant_id')          // plant IT
+        ->leftJoin('departemens as i', 'i.id_departemen', '=', 'c.departemen_id') // departemen IT
+        ->leftJoin('positions as j', 'j.id_position', '=', 'c.position_id')      // posisi IT
+        ->select(
+            'a.*',
+            'b.username as user_create',
+            'b.plant_id as plant_id_user_create',
+            'e.nama_plant as plant_name_user_create',
+            'e.label',
+            'b.departemen_id as dept_id_user_create',
+            'f.nama_departemen as dept_name_user_create',
+            'g.nama_position as position_user_create',
+            'b.nama_lengkap as nama_pemohon',
+
+            'c.username as it_finish',
+            'c.plant_id as plant_id_it_finish',
+            'h.nama_plant as plant_name_it_finish',
+            'c.departemen_id as dept_id_it_finish',
+            'i.nama_departemen as dept_name_it_finish',
+            'j.nama_position as position_it_finish',
+            'c.nama_lengkap as nama_it',
+
+            'd.nama_software'
+        )
+        ->where('a.id', $request->id)
+        ->where('a.jenis_ticket', 'software')
         ->firstOrFail();
 
-    $html = view('ticketings.incoming_software_pdf', compact('data'))->render();
+                
+        // ===================== PEMOHON =====================
+        $user_create = $data->user_create;
+        $plant_id_user_create = $data->plant_id_user_create;
+        $dept_id_user_create = $data->dept_id_user_create;
 
-    $mpdf = new \Mpdf\Mpdf([
-        'mode'   => 'utf-8',
-        'format' => 'A4',
-    ]);
+        $hirarki_pemohon = DB::table('user_hirarkis')
+            ->where('plant_id', $plant_id_user_create)
+            ->where('departemen_id', $dept_id_user_create)
+            ->where(function($q) use ($user_create) {
+                $q->orWhereJsonContains('level1', $user_create)
+                ->orWhere('level2', $user_create)
+                ->orWhere('level3', $user_create);
+            })
+            ->first();
 
-    $mpdf->WriteHTML($html);
+        $level4UsernamePemohon = $hirarki_pemohon->level4 ?? null;
+        $level4UserPemohon = $level4UsernamePemohon
+            ? DB::table('users as u')
+                ->leftJoin('plants as p', 'p.id_plant', '=', 'u.plant_id')
+                ->leftJoin('departemens as d', 'd.id_departemen', '=', 'u.departemen_id')
+                ->leftJoin('positions as pos', 'pos.id_position', '=', 'u.position_id') // ganti sesuai nama field
+                ->select(
+                    'u.nama_lengkap',
+                    'p.label as nama_plant',
+                    'd.nama_departemen',
+                    'pos.nama_position'
+                )
+                ->where('u.username', $level4UsernamePemohon)
+                ->first()
+            : null;
 
-    // default preview
-    $outputMode = $request->mode === 'download' ? 'D' : 'I';
+        $namaLevel4Pemohon       = $level4UserPemohon->nama_lengkap ?? '-';
+        $namaPlantLevel4Pemohon  = $level4UserPemohon->nama_plant ?? '-';
+        $namaDeptLevel4Pemohon   = $level4UserPemohon->nama_departemen ?? '-';
+        $namaPosLevel4Pemohon    = $level4UserPemohon->nama_position ?? '-';
 
-    return response(
-        $mpdf->Output('incoming-software.pdf', $outputMode),
-        200,
-        ['Content-Type' => 'application/pdf']
-    );
-}
+
+        // ===================== IT FINISH =====================
+        $it_finish = $data->it_finish;
+        $plant_id_it_finish = $data->plant_id_it_finish;
+        $dept_id_it_finish = $data->dept_id_it_finish;
+
+        $hirarki_it = DB::table('user_hirarkis')
+            ->where('plant_id', $plant_id_it_finish)
+            ->where('departemen_id', $dept_id_it_finish)
+            ->where(function($q) use ($it_finish) {
+                $q->orWhereJsonContains('level1', $it_finish)
+                ->orWhere('level2', $it_finish)
+                ->orWhere('level3', $it_finish);
+            })
+            ->first();
+
+        // Ambil username level3 & level2 untuk IT
+        $level3UsernameIt = $hirarki_it->level3 ?? null;
+        $level2UsernameIt = $hirarki_it->level2 ?? null;
+
+        // Ambil data user level3 IT
+        $level3UserIt = $level3UsernameIt
+            ? DB::table('users as u')
+                ->leftJoin('plants as p', 'p.id_plant', '=', 'u.plant_id')
+                ->leftJoin('departemens as d', 'd.id_departemen', '=', 'u.departemen_id')
+                ->leftJoin('positions as pos', 'pos.id_position', '=', 'u.position_id') // ganti sesuai field
+                ->select(
+                    'u.nama_lengkap',
+                    'p.label as nama_plant',
+                    'd.nama_departemen',
+                    'pos.nama_position'
+                )
+                ->where('u.username', $level3UsernameIt)
+                ->first()
+            : null;
+
+        // Ambil data user level2 IT
+        $level2UserIt = $level2UsernameIt
+            ? DB::table('users as u')
+                ->leftJoin('plants as p', 'p.id_plant', '=', 'u.plant_id')
+                ->leftJoin('departemens as d', 'd.id_departemen', '=', 'u.departemen_id')
+                ->leftJoin('positions as pos', 'pos.id_position', '=', 'u.position_id')
+                ->select(
+                    'u.nama_lengkap',
+                    'p.label as nama_plant',
+                    'd.nama_departemen',
+                    'pos.nama_position'
+                )
+                ->where('u.username', $level2UsernameIt)
+                ->first()
+            : null;
+
+        // Nama lengkap dan detail
+        $namaLevel3It      = $level3UserIt->nama_lengkap ?? '-';
+        $namaPlantLevel3It = $level3UserIt->nama_plant ?? '-';
+        $namaDeptLevel3It  = $level3UserIt->nama_departemen ?? '-';
+        $namaPosLevel3It   = $level3UserIt->nama_position ?? '-';
+
+        $namaLevel2It      = $level2UserIt->nama_lengkap ?? '-';
+        $namaPlantLevel2It = $level2UserIt->nama_plant ?? '-';
+        $namaDeptLevel2It  = $level2UserIt->nama_departemen ?? '-';
+        $namaPosLevel2It   = $level2UserIt->nama_position ?? '-';
+
+        //untuk qr
+        $qrPemohon          = 'Nama: '.$data->nama_pemohon."\nPosisi: ".$data->position_user_create."\nDept: ".$data->dept_name_user_create."\nPlant: ".$data->plant_name_user_create;
+        $qrLevel4Pemohon    = 'Nama: '.$namaLevel4Pemohon."\nPosisi: ".$namaPosLevel4Pemohon."\nDept: ".$namaDeptLevel4Pemohon."\nPlant: ".$namaPlantLevel4Pemohon;
+        $qrItFinish         = 'Nama: '.$data->nama_it."\nPosisi: ".$data->position_it_finish."\nDept: ".$data->dept_name_it_finish."\nPlant: ".$data->plant_name_it_finish;
+        $qrLevel3It         = 'Nama: '.$namaLevel3It."\nPosisi: ".$namaPosLevel3It."\nDept: ".$namaDeptLevel3It."\nPlant: ".$namaPlantLevel3It;
+        $qrLevel2It         = 'Nama: '.$namaLevel2It."\nPosisi: ".$namaPosLevel2It."\nDept: ".$namaDeptLevel2It."\nPlant: ".$namaPlantLevel2It;
+        // generate QR base64
+        $qrPemohonBase64       = 'data:image/svg+xml;base64,' . base64_encode(QrCode::format('svg')->size(100)->generate($qrPemohon));
+        $qrLevel4PemohonBase64 = 'data:image/svg+xml;base64,' . base64_encode(QrCode::format('svg')->size(100)->generate($qrLevel4Pemohon));
+        $qrItFinishBase64      = 'data:image/svg+xml;base64,' . base64_encode(QrCode::format('svg')->size(100)->generate($qrItFinish));
+        $qrLevel3ItBase64      = 'data:image/svg+xml;base64,' . base64_encode(QrCode::format('svg')->size(100)->generate($qrLevel3It));
+        $qrLevel2ItBase64      = 'data:image/svg+xml;base64,' . base64_encode(QrCode::format('svg')->size(100)->generate($qrLevel2It));
+
+
+
+        $html = view('ticketings.incoming_software_pdf', [
+                    'data'                      => $data,
+                    'namaLevel4Pemohon'         => $namaLevel4Pemohon,
+                    'namaPlantLevel4Pemohon'    => $namaPlantLevel4Pemohon,
+                    'namaDeptLevel4Pemohon'     => $namaDeptLevel4Pemohon,
+                    'namaPosLevel4Pemohon'      => $namaPosLevel4Pemohon,
+                    'namaLevel3It'              => $namaLevel3It,
+                    'namaPlantLevel3It'         => $namaPlantLevel3It,  
+                    'namaDeptLevel3It'          => $namaDeptLevel3It,
+                    'namaPosLevel3It'           => $namaPosLevel3It,
+                    'namaLevel2It'              => $namaLevel2It,
+                    'namaPlantLevel2It'         => $namaPlantLevel2It,
+                    'namaDeptLevel2It'          => $namaDeptLevel2It,
+                    'namaPosLevel2It'           => $namaPosLevel2It,
+                    'qrPemohonBase64'           => $qrPemohonBase64,
+                    'qrLevel4PemohonBase64'     => $qrLevel4PemohonBase64,
+                    'qrItFinishBase64'          => $qrItFinishBase64,
+                    'qrLevel3ItBase64'          => $qrLevel3ItBase64,
+                    'qrLevel2ItBase64'          => $qrLevel2ItBase64,
+                ])->render();
+
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode'          => 'utf-8',
+            'format'        => 'A4',
+            'margin_top'    => 5,
+            'margin_bottom' => 45, // RUANG FOOTER
+            'margin_left'   => 5,
+            'margin_right'  => 5,
+            'image_backend' => 'GD',
+        ]);
+        $mpdf->WriteHTML($html);
+        $outputMode = $request->mode === 'download' ? 'D' : 'I';
+
+        return response(
+            $mpdf->Output('incoming-software.pdf', $outputMode),
+            200,
+            ['Content-Type' => 'application/pdf']
+        );
+    }
 
 }

@@ -187,9 +187,6 @@ $(function() {
 
 });
 
-
-
-
 function btnSoftware() {
     jenisTicket = 'software';
     console.log(jenisTicket);
@@ -305,6 +302,7 @@ function btnSubmit() {
     let kategoriKlaim = $('#kategori_klaim').val() === 'other' ? $('#kategori_manual').val() : $('#kategori_klaim').val();
     console.log('id_software:', id_software, 'kategoriKlaim:', kategoriKlaim);
     // ==== Validasi input ====
+   
     if (!jenisTicket) {setErrorFocus('#jenis_ticket'); Swal.fire('Perhatian', 'Silakan pilih jenis ticket terlebih dahulu.', 'warning'); return;}
     if (!tglPermintaan) {setErrorFocus('#tgl_permintaan'); Swal.fire('Perhatian', 'Tanggal permintaan wajib diisi.', 'warning'); return;}
     if (jenisTicket === 'software') {
@@ -319,10 +317,10 @@ function btnSubmit() {
             return;
         }
     }
-
     if (jenisTicket === 'hardware') {
         if (!id_hardware) {setErrorFocus('#daftar_komputer'); Swal.fire('Perhatian', 'Silakan pilih hardware yang bermasalah.', 'warning'); return;}
     }
+    if (!deskripsi) {setErrorFocus('#deskripsi'); Swal.fire('Perhatian', 'Deskripsi Wajib diisi.', 'warning'); return;}
     
 
     // ==== Tentukan item_ticket berdasarkan jenis_ticket ====
