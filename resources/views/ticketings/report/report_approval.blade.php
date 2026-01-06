@@ -135,6 +135,7 @@
         let table;
         let table2;
         let doughnutChart, pieChart;
+        let currentUser = "{{ Auth::user()->username }}";
 
         $(document).ready(function() {
             table = $('#tabel').DataTable({
@@ -258,6 +259,30 @@
                 });
             });
             $('#detailTicketModal').on('hidden.bs.modal', function() {});
+
+            // --- Show/hide tombol Approve/Reject berdasarkan status ---
+            const btnApprove = $('#btnApproved');
+            const btnReject = $('#btnNotApproved');
+
+            let hideButtons = true; 
+            
+            if (jenis_ticket === 'software' || jenis_ticket === 'hardware') {
+                if (currentUser === rowData.approver_level2 && (rowData.status_level2 === null || rowData.status_level2 === undefined)) {
+                    hideButtons = false;
+                }
+                if (currentUser === rowData.approver_level3  && (rowData.status_level3 === null || rowData.status_level3 === undefined)) {
+                    hideButtons = false;
+                }
+            }
+
+
+            if (hideButtons) {
+                $('#btnApproved').hide();
+                $('#btnNotApproved').hide();
+            } else {
+                $('#btnApproved').show();
+                $('#btnNotApproved').show();
+            }
         });
 
 

@@ -269,7 +269,7 @@ class TicketReportExport implements FromCollection, WithEvents, WithTitle
                     $drawing->setCoordinates("{$col}{$qrStartRow}");
                     $drawing->setHeight(80);
                     $drawing->setOffsetX(25);
-                    $drawing->setOffsetY(5);
+                    $drawing->setOffsetY(10);
                     $drawing->setWorksheet($sheet);
 
                     // Merge sel untuk nama & title

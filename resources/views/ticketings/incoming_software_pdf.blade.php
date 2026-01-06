@@ -146,7 +146,7 @@
                     <img src="file://{{ public_path('storage/' . $data->file1) }}" style="height:12mm;">
                 @endif
             </td>
-            <td rowspan="3" style="text-align:center;">{{ $namaLevel4Pemohon }}</td>
+            <td rowspan="3" style="text-align:center;">{{ $finalPemohon['diperiksa']->nama_lengkap ?? $finalPemohon['diketahui']->nama_lengkap ?? '-'}}</td>
             <td rowspan="3" style="text-align:center;">{{ $data->nama_it }}</td>
             <td rowspan="3" style="text-align:center;">
                 {{ $data->time_finish ? \Carbon\Carbon::parse($data->time_finish)->format('d-m-Y') : '-' }}</td>
@@ -217,23 +217,52 @@
 
                 <!-- QR -->
                 <tr>
-                    <td style="border:1px solid #000;width:16%;padding:2mm 2mm;vertical-align:middle;text-align:center;"><img src="{{ $qrLevel3ItBase64 }}" style="height:12mm;"></td>
-                    <td style="border:1px solid #000;width:16%;padding:2mm 2mm;vertical-align:middle;text-align:center;"><img src="{{ $qrLevel2ItBase64 }}" style="height:12mm;"></td>
-                    <td style="border:1px solid #000;width:16%;padding:2mm 2mm;vertical-align:middle;text-align:center;"><img src="{{ $qrItFinishBase64 }}" style="height:12mm;"></td>
-                    <td style="border:none;width:4%;"></td>
-                    <td style="border:1px solid #000;width:16%;padding:2mm 2mm;vertical-align:middle;text-align:center;"><img src="{{ $qrLevel4PemohonBase64 }}" style="height:12mm;"></td>
-                    <td style="border:1px solid #000;width:16%;padding:2mm 2mm;vertical-align:middle;text-align:center;"><img src="{{ $qrLevel2PemohonBase64 }}" style="height:12mm;"></td>
-                    <td style="border:1px solid #000;width:16%;padding:2mm 2mm;vertical-align:middle;text-align:center;"><img src="{{ $qrPemohonBase64 }}" style="height:12mm;"></td>
+                    {{-- IT --}}
+                    <td style="border:1px solid #000;width:16%;padding:2mm;text-align:center;">
+                        @if ($finalIt['diketahui_qr'])
+                            <img src="{{ $finalIt['diketahui_qr'] }}" style="height:12mm;">
+                        @endif
+                    </td>
+                    <td style="border:1px solid #000;width:16%;padding:2mm;text-align:center;">
+                        @if ($finalIt['diperiksa_qr'])
+                            <img src="{{ $finalIt['diperiksa_qr'] }}" style="height:12mm;">
+                        @endif
+                    </td>
+                    <td style="border:1px solid #000;width:16%;padding:2mm;text-align:center;">
+                        <img src="{{ $qrItFinish }}" style="height:12mm;">
+                    </td>
+                    <td style="border:none;"></td>
+                    {{-- PEMOHON --}}
+                    <td style="border:1px solid #000;width:16%;padding:2mm;text-align:center;vertical-align:middle;height:12mm;">
+                        @if ($finalPemohon['diketahui_qr'])
+                            <img src="{{ $finalPemohon['diketahui_qr'] }}" style="height:12mm;">
+                        @else
+                            -
+                        @endif
+                    </td>
+                    <td style="border:1px solid #000;width:16%;padding:2mm;text-align:center;vertical-align:middle;height:12mm;">
+                        @if ($finalPemohon['diperiksa_qr'])
+                            <img src="{{ $finalPemohon['diperiksa_qr'] }}" style="height:12mm;">
+                        @else
+                            -
+                        @endif
+                    </td>
+                    <td style="border:1px solid #000;width:16%;padding:2mm;text-align:center;">
+                        <img src="{{ $qrPemohon }}" style="height:12mm;">
+                    </td>
                 </tr>
+
                 <!-- NAMA -->
                 <tr>
-                    <td style="border:1px solid #000;width:16%;vertical-align:middle;word-wrap:break-word;">{{ $namaLevel3It }}</td>
-                    <td style="border:1px solid #000;width:16%;vertical-align:middle;word-wrap:break-word;">{{ $namaLevel2It }}</td>
-                    <td style="border:1px solid #000;width:16%;vertical-align:middle;word-wrap:break-word;">{{ $data->nama_it }}</td>
+                    {{-- IT --}}
+                    <td style="border:1px solid #000;text-align:center;vertical-align:middle;">{{ $finalIt['diketahui']->nama_lengkap ?? '-' }}</td>
+                    <td style="border:1px solid #000;text-align:center;vertical-align:middle;">{{ $finalIt['diperiksa']->nama_lengkap ?? '-' }}</td>
+                    <td style="border:1px solid #000;text-align:center;vertical-align:middle;">{{ $data->nama_it }}</td>
                     <td style="border:none;width:4%;"></td>
-                    <td style="border:1px solid #000;width:16%;vertical-align:middle;word-wrap:break-word;">{{ $namaLevel3Pemohon }}</td>
-                    <td style="border:1px solid #000;width:16%;vertical-align:middle;word-wrap:break-word;">{{ $namaLevel2Pemohon }}</td>
-                    <td style="border:1px solid #000;width:16%;vertical-align:middle;word-wrap:break-word;">{{ $data->nama_pemohon }}</td>
+                    {{-- PEMOHON --}}
+                    <td style="border:1px solid #000;text-align:center;vertical-align:middle;">{{ $finalPemohon['diketahui']->nama_lengkap ?? '-' }}</td>
+                    <td style="border:1px solid #000;text-align:center;vertical-align:middle;">{{ $finalPemohon['diperiksa']->nama_lengkap ?? '-' }}</td>
+                    <td style="border:1px solid #000;text-align:center;vertical-align:middle;">{{ $data->nama_pemohon }}</td>
                 </tr>
 
             </table>
@@ -242,4 +271,5 @@
 
     <sethtmlpagefooter name="footerTTD" value="on" />
 </body>
+
 </html>

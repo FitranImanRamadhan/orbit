@@ -485,6 +485,14 @@ class ReportController extends Controller
 
     public function proses_approval_report_ticket(Request $request)
     {
+        $request->validate([
+                'ticket_no' => 'required|string',
+                'status'    => 'required|in:approved,rejected',
+                'remarks'   => 'nullable|string'
+            ]);
+
+        $pengguna_login = Auth::user()->username;
+        $plant_id_login = Auth::user()->plant_id;
     }
 
     public function export_excel(Request $request)

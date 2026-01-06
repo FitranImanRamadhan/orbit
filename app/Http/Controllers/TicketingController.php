@@ -15,6 +15,11 @@ use App\Models\Software;
 use App\Helpers\NotificationHelper;
 use Mpdf\Mpdf;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Writer\PngWriter;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelLow;
+
 
 class TicketingController extends Controller
 {
@@ -1058,197 +1063,158 @@ class TicketingController extends Controller
         ->firstOrFail();
 
                 
-        // ===================== PEMOHON =====================
-        $user_create = $data->user_create;
-        $plant_id_user_create = $data->plant_id_user_create;
-        $dept_id_user_create = $data->dept_id_user_create;
+        // =====================================================
+        // HELPER AMBIL DETAIL USER
+        // =====================================================
+        $getUserDetail = function ($username) {
+            if (empty($username)) {return null;}
+            return DB::table('users as u')
+                ->leftJoin('plants as p', 'p.id_plant', '=', 'u.plant_id')
+                ->leftJoin('departemens as d', 'd.id_departemen', '=', 'u.departemen_id')
+                ->leftJoin('positions as pos', 'pos.id_position', '=', 'u.position_id')
+                ->select(
+                    'u.nama_lengkap',
+                    'p.label as nama_plant',
+                    'd.nama_departemen',
+                    'pos.nama_position'
+                )
+                ->where('u.username', $username)
+                ->first();
+        };
 
-        $hirarki_pemohon = DB::table('user_hirarkis')
-            ->where('plant_id', $plant_id_user_create)
-            ->where('departemen_id', $dept_id_user_create)
-            ->where(function($q) use ($user_create) {
-                $q->orWhereJsonContains('level1', $user_create)
-                ->orWhere('level2', $user_create)
-                ->orWhere('level3', $user_create);
+        // ===================== PEMOHON ========================
+        $hirarkiPemohon = DB::table('user_hirarkis')
+            ->where('plant_id', $data->plant_id_user_create)
+            ->where('departemen_id', $data->dept_id_user_create)
+            ->where(function ($q) use ($data) {
+                $q->orWhereJsonContains('level1', $data->user_create)
+                ->orWhere('level2', $data->user_create)
+                ->orWhere('level3', $data->user_create);
             })
             ->first();
 
-        // ===== LEVEL 4 =====
-        $level4UsernamePemohon = $hirarki_pemohon->level4 ?? null;
-        $level4UserPemohon = $level4UsernamePemohon
-            ? DB::table('users as u')
-                ->leftJoin('plants as p', 'p.id_plant', '=', 'u.plant_id')
-                ->leftJoin('departemens as d', 'd.id_departemen', '=', 'u.departemen_id')
-                ->leftJoin('positions as pos', 'pos.id_position', '=', 'u.position_id')
-                ->select(
-                    'u.nama_lengkap',
-                    'p.label as nama_plant',
-                    'd.nama_departemen',
-                    'pos.nama_position'
-                )
-                ->where('u.username', $level4UsernamePemohon)
-                ->first()
-            : null;
-        $namaLevel4Pemohon       = $level4UserPemohon->nama_lengkap ?? '-';
-        $namaPlantLevel4Pemohon  = $level4UserPemohon->nama_plant ?? '-';
-        $namaDeptLevel4Pemohon   = $level4UserPemohon->nama_departemen ?? '-';
-        $namaPosLevel4Pemohon    = $level4UserPemohon->nama_position ?? '-';
+        $pemohon = [
+            'level2' => $getUserDetail($hirarkiPemohon->level2 ?? null),
+            'level3' => $getUserDetail($hirarkiPemohon->level3 ?? null),
+            'level4' => $getUserDetail($hirarkiPemohon->level4 ?? null),
+        ];
 
-        // ===== LEVEL 3 =====
-        $level3UsernamePemohon = $hirarki_pemohon->level3 ?? null;
-        $level3UserPemohon = $level3UsernamePemohon
-            ? DB::table('users as u')
-                ->leftJoin('plants as p', 'p.id_plant', '=', 'u.plant_id')
-                ->leftJoin('departemens as d', 'd.id_departemen', '=', 'u.departemen_id')
-                ->leftJoin('positions as pos', 'pos.id_position', '=', 'u.position_id')
-                ->select(
-                    'u.nama_lengkap',
-                    'p.label as nama_plant',
-                    'd.nama_departemen',
-                    'pos.nama_position'
-                )
-                ->where('u.username', $level3UsernamePemohon)
-                ->first()
-            : null;
+        // ================= LOGIKA FINAL PEMOHON =================
+        $finalPemohon = [
+            'diperiksa' => null,
+            'diketahui' => null,
+        ];
 
-        $namaLevel3Pemohon       = $level3UserPemohon->nama_lengkap ?? '-';
-        $namaPlantLevel3Pemohon  = $level3UserPemohon->nama_plant ?? '-';
-        $namaDeptLevel3Pemohon   = $level3UserPemohon->nama_departemen ?? '-';
-        $namaPosLevel3Pemohon    = $level3UserPemohon->nama_position ?? '-';
+        if (empty($hirarkiPemohon->level2)) {// CASE 1: level2 TIDAK ADA
+            $finalPemohon['diperiksa'] = $pemohon['level3'];
+            $finalPemohon['diketahui'] = $pemohon['level4'];
+        } elseif (empty($hirarkiPemohon->level3)) {// CASE 2: level2 ADA, level3 TIDAK ADA
+            $finalPemohon['diperiksa'] = $pemohon['level2'];
+            $finalPemohon['diketahui'] = $pemohon['level4'];
+        } else {// CASE 3: level2 & level3 ADA
+            $finalPemohon['diperiksa'] = $pemohon['level2'];
+            $finalPemohon['diketahui'] = $pemohon['level3'];
+        }
 
-
-        // ===== LEVEL 2 =====
-        $level2UsernamePemohon = $hirarki_pemohon->level2 ?? null;
-        $level2UserPemohon = $level2UsernamePemohon
-            ? DB::table('users as u')
-                ->leftJoin('plants as p', 'p.id_plant', '=', 'u.plant_id')
-                ->leftJoin('departemens as d', 'd.id_departemen', '=', 'u.departemen_id')
-                ->leftJoin('positions as pos', 'pos.id_position', '=', 'u.position_id')
-                ->select(
-                    'u.nama_lengkap',
-                    'p.label as nama_plant',
-                    'd.nama_departemen',
-                    'pos.nama_position'
-                )
-                ->where('u.username', $level2UsernamePemohon)
-                ->first()
-            : null;
-
-        $namaLevel2Pemohon       = $level2UserPemohon->nama_lengkap ?? '-';
-        $namaPlantLevel2Pemohon  = $level2UserPemohon->nama_plant ?? '-';
-        $namaDeptLevel2Pemohon   = $level2UserPemohon->nama_departemen ?? '-';
-        $namaPosLevel2Pemohon    = $level2UserPemohon->nama_position ?? '-';
-
-
-        // ===================== IT FINISH =====================
-        $it_finish = $data->it_finish;
-        $plant_id_it_finish = $data->plant_id_it_finish;
-        $dept_id_it_finish = $data->dept_id_it_finish;
-
-        $hirarki_it = DB::table('user_hirarkis')
-            ->where('plant_id', $plant_id_it_finish)
-            ->where('departemen_id', $dept_id_it_finish)
-            ->where(function($q) use ($it_finish) {
-                $q->orWhereJsonContains('level1', $it_finish)
-                ->orWhere('level2', $it_finish)
-                ->orWhere('level3', $it_finish);
+        // ======================= IT ============================
+        $hirarkiIt = DB::table('user_hirarkis')
+            ->where('plant_id', $data->plant_id_it_finish)
+            ->where('departemen_id', $data->dept_id_it_finish)
+            ->where(function ($q) use ($data) {
+                $q->orWhereJsonContains('level1', $data->it_finish)
+                ->orWhere('level2', $data->it_finish)
+                ->orWhere('level3', $data->it_finish);
             })
             ->first();
 
-        // Ambil username level3 & level2 untuk IT
-        $level3UsernameIt = $hirarki_it->level3 ?? null;
-        $level2UsernameIt = $hirarki_it->level2 ?? null;
+        $it = [
+                'level2' => $getUserDetail($hirarkiIt->level2 ?? null),
+                'level3' => $getUserDetail($hirarkiIt->level3 ?? null),
+            ];
 
-        // Ambil data user level3 IT
-        $level3UserIt = $level3UsernameIt
-            ? DB::table('users as u')
-                ->leftJoin('plants as p', 'p.id_plant', '=', 'u.plant_id')
-                ->leftJoin('departemens as d', 'd.id_departemen', '=', 'u.departemen_id')
-                ->leftJoin('positions as pos', 'pos.id_position', '=', 'u.position_id') // ganti sesuai field
-                ->select(
-                    'u.nama_lengkap',
-                    'p.label as nama_plant',
-                    'd.nama_departemen',
-                    'pos.nama_position'
-                )
-                ->where('u.username', $level3UsernameIt)
-                ->first()
-            : null;
+        // IT: diperiksa = level2, diketahui = level3
+        $finalIt = [
+            'diperiksa' => $it['level2'],
+            'diketahui' => $it['level3'],
+        ];
 
-        // Ambil data user level2 IT
-        $level2UserIt = $level2UsernameIt
-            ? DB::table('users as u')
-                ->leftJoin('plants as p', 'p.id_plant', '=', 'u.plant_id')
-                ->leftJoin('departemens as d', 'd.id_departemen', '=', 'u.departemen_id')
-                ->leftJoin('positions as pos', 'pos.id_position', '=', 'u.position_id')
-                ->select(
-                    'u.nama_lengkap',
-                    'p.label as nama_plant',
-                    'd.nama_departemen',
-                    'pos.nama_position'
-                )
-                ->where('u.username', $level2UsernameIt)
-                ->first()
-            : null;
-        // Nama lengkap dan detail
-        $namaLevel3It      = $level3UserIt->nama_lengkap ?? '-';
-        $namaPlantLevel3It = $level3UserIt->nama_plant ?? '-';
-        $namaDeptLevel3It  = $level3UserIt->nama_departemen ?? '-';
-        $namaPosLevel3It   = $level3UserIt->nama_position ?? '-';
-        $namaLevel2It      = $level2UserIt->nama_lengkap ?? '-';
-        $namaPlantLevel2It = $level2UserIt->nama_plant ?? '-';
-        $namaDeptLevel2It  = $level2UserIt->nama_departemen ?? '-';
-        $namaPosLevel2It   = $level2UserIt->nama_position ?? '-';
+        // =====================================================
+        // ======================= QR ============================
+        // =====================================================
+        $makeQr = function ($text) {
+            if (!$text) {return null;}
+            $result = Builder::create()
+                ->writer(new PngWriter())
+                ->data($text)
+                ->encoding(new Encoding('UTF-8'))
+                ->size(150)
+                ->margin(0)
+                ->build();
 
-        //untuk qr
-        $qrPemohon      = 'Nama: '.$data->nama_pemohon."\nPosisi: ".$data->position_user_create."\nDept: ".$data->dept_name_user_create."\nPlant: ".$data->plant_name_user_create;
-        $qrLevel4Pemohon='Nama:'.$namaLevel4Pemohon."\nPosisi:".$namaPosLevel4Pemohon."\nDept:".$namaDeptLevel4Pemohon."\nPlant:".$namaPlantLevel4Pemohon;
-        $qrLevel3Pemohon='Nama:'.$namaLevel3Pemohon."\nPosisi:".$namaPosLevel3Pemohon."\nDept:".$namaDeptLevel3Pemohon."\nPlant:".$namaPlantLevel3Pemohon;
-        $qrLevel2Pemohon='Nama:'.$namaLevel2Pemohon."\nPosisi:".$namaPosLevel2Pemohon."\nDept:".$namaDeptLevel2Pemohon."\nPlant:".$namaPlantLevel2Pemohon;
+            return 'data:image/png;base64,' . base64_encode($result->getString());
+        };
 
-        $qrItFinish         = 'Nama: '.$data->nama_it."\nPosisi: ".$data->position_it_finish."\nDept: ".$data->dept_name_it_finish."\nPlant: ".$data->plant_name_it_finish;
-        $qrLevel3It         = 'Nama: '.$namaLevel3It."\nPosisi: ".$namaPosLevel3It."\nDept: ".$namaDeptLevel3It."\nPlant: ".$namaPlantLevel3It;
-        $qrLevel2It         = 'Nama: '.$namaLevel2It."\nPosisi: ".$namaPosLevel2It."\nDept: ".$namaDeptLevel2It."\nPlant: ".$namaPlantLevel2It;
-        // generate QR base64
-        $qrPemohonBase64       = 'data:image/svg+xml;base64,' . base64_encode(QrCode::format('svg')->size(100)->generate($qrPemohon));
-        $qrLevel4PemohonBase64 ='data:image/svg+xml;base64,'.base64_encode(QrCode::format('svg')->size(100)->generate($qrLevel4Pemohon));
-        $qrLevel3PemohonBase64 ='data:image/svg+xml;base64,'.base64_encode(QrCode::format('svg')->size(100)->generate($qrLevel3Pemohon));
-        $qrLevel2PemohonBase64 ='data:image/svg+xml;base64,'.base64_encode(QrCode::format('svg')->size(100)->generate($qrLevel2Pemohon));
-        $qrItFinishBase64      = 'data:image/svg+xml;base64,' . base64_encode(QrCode::format('svg')->size(100)->generate($qrItFinish));
-        $qrLevel3ItBase64      = 'data:image/svg+xml;base64,' . base64_encode(QrCode::format('svg')->size(100)->generate($qrLevel3It));
-        $qrLevel2ItBase64      = 'data:image/svg+xml;base64,' . base64_encode(QrCode::format('svg')->size(100)->generate($qrLevel2It));
+        // PEMOHON
+        $finalPemohon['diperiksa_qr'] = $finalPemohon['diperiksa']
+            ? $makeQr(
+                "Nama: {$finalPemohon['diperiksa']->nama_lengkap}\n" .
+                "Posisi: {$finalPemohon['diperiksa']->nama_position}\n" .
+                "Dept: {$finalPemohon['diperiksa']->nama_departemen}\n" .
+                "Plant: {$finalPemohon['diperiksa']->nama_plant}"
+            ) : null;
 
+        $finalPemohon['diketahui_qr'] = $finalPemohon['diketahui']
+            ? $makeQr(
+                "Nama: {$finalPemohon['diketahui']->nama_lengkap}\n" .
+                "Posisi: {$finalPemohon['diketahui']->nama_position}\n" .
+                "Dept: {$finalPemohon['diketahui']->nama_departemen}\n" .
+                "Plant: {$finalPemohon['diketahui']->nama_plant}"
+            ): null;
+
+
+        // IT
+        $finalIt['diperiksa_qr'] = $finalIt['diperiksa']
+            ? $makeQr(
+                "Nama: {$finalIt['diperiksa']->nama_lengkap}\n" .
+                "Posisi: {$finalIt['diperiksa']->nama_position}\n" .
+                "Dept: {$finalIt['diperiksa']->nama_departemen}\n" .
+                "Plant: {$finalIt['diperiksa']->nama_plant}"
+            ): null;
+
+        $finalIt['diketahui_qr'] = $finalIt['diketahui']
+            ? $makeQr(
+                "Nama: {$finalIt['diketahui']->nama_lengkap}\n" .
+                "Posisi: {$finalIt['diketahui']->nama_position}\n" .
+                "Dept: {$finalIt['diketahui']->nama_departemen}\n" .
+                "Plant: {$finalIt['diketahui']->nama_plant}"
+            ): null;
+
+
+        // PEMOHON CREATE (REQUESTER)
+        $qrPemohon = $makeQr(
+            "Nama: {$data->nama_pemohon}\n" .
+            "Posisi: {$data->position_user_create}\n" .
+            "Dept: {$data->dept_name_user_create}\n" .
+            "Plant: {$data->plant_name_user_create}"
+        );
+
+        // IT FINISH
+        $qrItFinish = $makeQr(
+            "Nama: {$data->nama_it}\n" .
+            "Posisi: {$data->position_it_finish}\n" .
+            "Dept: {$data->dept_name_it_finish}\n" .
+            "Plant: {$data->plant_name_it_finish}"
+        );
+
+
+        // ====================== RENDER =========================
         $html = view('ticketings.incoming_software_pdf', [
-                    'data'                      => $data,
-                    'namaLevel4Pemohon'         =>$namaLevel4Pemohon,
-                    'namaPlantLevel4Pemohon'    =>$namaPlantLevel4Pemohon,
-                    'namaDeptLevel4Pemohon'     =>$namaDeptLevel4Pemohon,
-                    'namaPosLevel4Pemohon'      =>$namaPosLevel4Pemohon,
-                    'namaLevel3Pemohon'         =>$namaLevel3Pemohon,
-                    'namaPlantLevel3Pemohon'    =>$namaPlantLevel3Pemohon,
-                    'namaDeptLevel3Pemohon'     =>$namaDeptLevel3Pemohon,
-                    'namaPosLevel3Pemohon'      =>$namaPosLevel3Pemohon,
-                    'namaLevel2Pemohon'         =>$namaLevel2Pemohon,
-                    'namaPlantLevel2Pemohon'    =>$namaPlantLevel2Pemohon,
-                    'namaDeptLevel2Pemohon'     =>$namaDeptLevel2Pemohon,
-                    'namaPosLevel2Pemohon'      =>$namaPosLevel2Pemohon,
-                    'namaLevel3It'              => $namaLevel3It,
-                    'namaPlantLevel3It'         => $namaPlantLevel3It,  
-                    'namaDeptLevel3It'          => $namaDeptLevel3It,
-                    'namaPosLevel3It'           => $namaPosLevel3It,
-                    'namaLevel2It'              => $namaLevel2It,
-                    'namaPlantLevel2It'         => $namaPlantLevel2It,
-                    'namaDeptLevel2It'          => $namaDeptLevel2It,
-                    'namaPosLevel2It'           => $namaPosLevel2It,
-                    'qrPemohonBase64'           => $qrPemohonBase64,
-                    'qrLevel4PemohonBase64'     => $qrLevel4PemohonBase64,
-                    'qrLevel3PemohonBase64'     => $qrLevel3PemohonBase64,
-                    'qrLevel2PemohonBase64'     => $qrLevel2PemohonBase64,
-                    'qrItFinishBase64'          => $qrItFinishBase64,
-                    'qrLevel3ItBase64'          => $qrLevel3ItBase64,
-                    'qrLevel2ItBase64'          => $qrLevel2ItBase64,
-                ])->render();
-
+            'data'         => $data,
+            'finalPemohon' => $finalPemohon,
+            'finalIt'      => $finalIt,
+            'qrPemohon'    => $qrPemohon,
+            'qrItFinish'   => $qrItFinish,
+        ])->render();
 
         $mpdf = new \Mpdf\Mpdf([
             'mode'          => 'utf-8',
