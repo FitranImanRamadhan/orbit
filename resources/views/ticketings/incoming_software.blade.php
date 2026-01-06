@@ -315,35 +315,33 @@
 
             let currentPdfId = null;
 
-$('#tabel').on('click', '.btn-preview', function () {
-    currentPdfId = $(this).data('id');
-    if (!currentPdfId) return alert('ID tidak ditemukan');
+            $('#tabel').on('click', '.btn-preview', function () {
+                currentPdfId = $(this).data('id');
+                let rowData = table.row($(this).closest('tr')).data();
+                if (!currentPdfId) return  Swal.fire('Info', 'ID Tidak Ditemukan', 'info');
+                if (rowData.status_problem !== 'closed') return  Swal.fire('Info', 'Ticket Belum selesai dikerjakan', 'info');
 
-    $('#iframePreviewPdf').attr(
-        'src',
-        `/ticketings/incoming-software/pdf/preview?id=${currentPdfId}&mode=preview`
-    );
+                $('#iframePreviewPdf').attr(
+                    'src',
+                    `/ticketings/incoming-software/pdf/preview?id=${currentPdfId}&mode=preview`
+                );
 
-    new bootstrap.Modal('#previewPdfModal').show();
-});
+                new bootstrap.Modal('#previewPdfModal').show();
+            });
 
-$('#btnDownloadPdf').on('click', function () {
-    if (!currentPdfId) return;
+            $('#btnDownloadPdf').on('click', function () {
+                if (!currentPdfId) return;
 
-    window.open(
-        `/ticketings/incoming-software/pdf/preview?id=${currentPdfId}&mode=download`,
-        '_blank'
-    );
-});
+                window.open(
+                    `/ticketings/incoming-software/pdf/preview?id=${currentPdfId}&mode=download`,
+                    '_blank'
+                );
+            });
 
-$('#previewPdfModal').on('hidden.bs.modal', function () {
-    $('#iframePreviewPdf').attr('src', '');
-    currentPdfId = null;
-});
-
-
-
-
+            $('#previewPdfModal').on('hidden.bs.modal', function () {
+                $('#iframePreviewPdf').attr('src', '');
+                currentPdfId = null;
+            });
         });
 
         function applyFilter() {

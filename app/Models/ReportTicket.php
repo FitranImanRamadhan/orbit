@@ -13,15 +13,30 @@ class ReportTicket extends Model
         'month',
         'week',
         'jenis_ticket',
-        'approver',
-        'status_approval',
-        'date_approval',
+
+        'user_create',
+
+        'approver_level2',
+        'approver_level3',
+
+        'status_level2',
+        'status_level3',
+
+        'date_level2',
+        'date_level3',
+
         'status_ticket',
     ];
 
+    /**
+     * Cast tipe data
+     */
     protected $casts = [
-        'status_approval' => 'boolean',
-        'date_approval'   => 'datetime',
+        'status_level2' => 'boolean',
+        'status_level3' => 'boolean',
+
+        'date_level2' => 'datetime',
+        'date_level3' => 'datetime',
     ];
 
    protected function serializeDate(\DateTimeInterface $date)

@@ -280,13 +280,13 @@
                 success: function(res) {
                     if (!res.success) {
                         table.clear().draw();
-                        alert(res.message);
+                        Swal.fire('Warning', res.message, 'warning');
                         return;
                     }
                     table.clear().rows.add(res.data).draw();
                 },
-                error: function(xhr) {
-                    alert('Gagal mengambil data');
+                error: function (xhr) {
+                    Swal.fire('Error', 'Terjadi Kesalahan Server', 'error');
                     console.error(xhr.responseText);
                 }
             });

@@ -3,9 +3,14 @@
 namespace App\Http\Controllers;
 use App\Models\ReportTicket;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;  
+use App\Helpers\QrTempCleaner;
 use App\Exports\TicketReportExport;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;  
 use Maatwebsite\Excel\Facades\Excel;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Writer\PngWriter;
 
 class ReportController extends Controller
 {
@@ -59,7 +64,7 @@ class ReportController extends Controller
 
         if ($data->isEmpty()) {
             return response()->json([
-                'success' => true,
+                'success' => false,
                 'message' => 'Data tidak ditemukan untuk periode yang dipilih.',
                 'data' => []
             ]);
@@ -241,7 +246,7 @@ class ReportController extends Controller
 
         if ($data->isEmpty()) {
             return response()->json([
-                'success' => true,
+                'success' => false,
                 'message' => 'Data tidak ditemukan untuk periode yang dipilih.',
                 'data' => []
             ]);
@@ -377,6 +382,24 @@ class ReportController extends Controller
 
     public function create_report_ticket(Request $request)
     {
+        $username = Auth::user()->username;
+        $plantId = Auth::user()->plant_id;
+        $departemenId = Auth::user()->departemen_id;
+
+        $hirarki = DB::table('user_hirarkis')
+            ->where('plant_id', $plantId)
+            ->where('departemen_id', $departemenId)
+            ->where(function ($q) use ($username) {
+                $q->where('level2', $username)
+                    ->orWhere('level3', $username)
+                    ->orWhere('level4', $username)
+                    ->orWhereJsonContains('level1', $username);
+            })
+            ->first();
+        if (!$hirarki) {
+            return response()->json(['message' => 'Hirarki user tidak ditemukan untuk plant dan departemen']);
+        }
+
         $request->validate([
             'year' => 'required|integer',
             'month' => 'required|integer',
@@ -405,13 +428,6 @@ class ReportController extends Controller
         if (ReportTicket::where(compact('year','month','week','jenis_ticket'))->exists())
             return response()->json(['success' => false, 'message' => 'Data reporting periode ini sudah pernah dibuat']);
 
-        $approver = DB::table('users as a')
-            ->join('departemens as b','a.departemen_id','=','b.id_departemen')
-            ->join('positions as c','a.position_id','=','c.id_position')
-            ->whereIn(DB::raw('LOWER(c.nama_position)'), ['ass. manager','asst. manager','ass.man'])
-            ->whereRaw('LOWER(b.nama_departemen)=?', ['it'])
-            ->value('a.username');
-
         DB::beginTransaction();
         try {
             ReportTicket::create([
@@ -419,9 +435,9 @@ class ReportController extends Controller
                 'month' => $month,
                 'week' => $week,
                 'jenis_ticket' => $jenis_ticket,
-                'approver' => $approver,
-                'status_approval' => null,
-                'date_approval' => null,
+                'user_create' => $username,
+                'approver_level2' => $hirarki->level2,
+                'approver_level3' => $hirarki->level3,
                 'status_ticket' => 'waiting',
             ]);
 
@@ -443,11 +459,7 @@ class ReportController extends Controller
 
     public function data_report_approval(Request $request)
     {
-        $query = ReportTicket::select(
-                'id','year','month','week','jenis_ticket',
-                'approver','status_ticket','status_approval',
-                'date_approval','created_at'
-            );
+        $query = ReportTicket::query();
 
         if ($request->status_ticket) {
             $query->where('status_ticket', $request->status_ticket);
@@ -521,6 +533,65 @@ class ReportController extends Controller
             ]);
         }
         
+        $reportTicket = ReportTicket::query()
+                    ->from('report_tickets as a')
+                    ->leftJoin('users as b', 'b.username', '=', 'a.user_create')// USER CREATE
+                    ->leftJoin('plants as e', 'e.id_plant', '=', 'b.plant_id')
+                    ->leftJoin('departemens as f', 'f.id_departemen', '=', 'b.departemen_id')
+                    ->leftJoin('positions as g', 'g.id_position', '=', 'b.position_id')
+                    ->leftJoin('users as c', 'c.username', '=', 'a.approver_level2')// APPROVER LEVEL 2
+                    ->leftJoin('plants as h', 'h.id_plant', '=', 'c.plant_id')
+                    ->leftJoin('departemens as i', 'i.id_departemen', '=', 'c.departemen_id')
+                    ->leftJoin('positions as j', 'j.id_position', '=', 'c.position_id')
+                    ->leftJoin('users as d', 'd.username', '=', 'a.approver_level3')// APPROVER LEVEL 3
+                    ->leftJoin('plants as k', 'k.id_plant', '=', 'd.plant_id')
+                    ->leftJoin('departemens as l', 'l.id_departemen', '=', 'd.departemen_id')
+                    ->leftJoin('positions as m', 'm.id_position', '=', 'd.position_id')
+                    ->where('a.jenis_ticket', $jenis_ticket)
+                    ->where('a.year', $year)
+                    ->where('a.month', $month)
+                    ->where('a.week', $week)
+                    ->select(
+                        'a.*',
+                        'b.nama_lengkap as user_create_name',
+                        'e.nama_plant as user_create_plant',
+                        'f.nama_departemen as user_create_departemen',
+                        'g.nama_position as user_create_position',
+                        'c.nama_lengkap as approver_level2_name',
+                        'h.nama_plant as approver_level2_plant',
+                        'i.nama_departemen as approver_level2_departemen',
+                        'j.nama_position as approver_level2_position',
+                        'd.nama_lengkap as approver_level3_name',
+                        'k.nama_plant as approver_level3_plant',
+                        'l.nama_departemen as approver_level3_departemen',
+                        'm.nama_position as approver_level3_position'
+                    )
+                    ->first();
+        // Folder QR
+        $qrDir = storage_path('app/temp_qr');
+        if (!file_exists($qrDir)) { mkdir($qrDir, 0777, true); }
+        $uniq = uniqid();
+
+        $qrUserCreatePath = $qrDir."/qr_user_create_$uniq.png";
+        $qrApproverL2Path = $qrDir."/qr_approver_l2_$uniq.png";
+        $qrApproverL3Path = $qrDir."/qr_approver_l3_$uniq.png";
+
+        // Data QR
+        $qrUserCreateText     = 'Nama: '.$reportTicket->user_create_name."\nPosisi: ".$reportTicket->user_create_position."\nDept: ".$reportTicket->user_create_departemen."\nPlant: ".$reportTicket->user_create_plant;
+        $qrApproverLevel2Text = 'Nama: '.$reportTicket->approver_level2_name."\nPosisi: ".$reportTicket->approver_level2_position."\nDept: ".$reportTicket->approver_level2_departemen."\nPlant: ".$reportTicket->approver_level2_plant;
+        $qrApproverLevel3Text = 'Nama: '.$reportTicket->approver_level3_name."\nPosisi: ".$reportTicket->approver_level3_position."\nDept: ".$reportTicket->approver_level3_departemen."\nPlant: ".$reportTicket->approver_level3_plant;
+
+        // Generate QR PNG
+        Builder::create()->writer(new PngWriter())->data($qrUserCreateText)->size(150)->build()->saveToFile($qrUserCreatePath);
+        Builder::create()->writer(new PngWriter())->data($qrApproverLevel2Text)->size(150)->build()->saveToFile($qrApproverL2Path);
+        Builder::create()->writer(new PngWriter())->data($qrApproverLevel3Text)->size(150)->build()->saveToFile($qrApproverL3Path);
+
+        // Optional: hapus QR setelah generate
+        register_shutdown_function(function () use ($qrUserCreatePath, $qrApproverL2Path, $qrApproverL3Path) {
+            @unlink($qrUserCreatePath);
+            @unlink($qrApproverL2Path);
+            @unlink($qrApproverL3Path);
+        });
          // ===============================
         // PIE (Jenis Departemen)
         // ===============================
@@ -559,6 +630,10 @@ class ReportController extends Controller
         return Excel::download(
             new TicketReportExport(
                 $data,
+                $reportTicket,
+                $qrUserCreatePath,
+                $qrApproverL2Path,
+                $qrApproverL3Path,
                 $pieChart,
                 $doughnutChart,
                 $week,

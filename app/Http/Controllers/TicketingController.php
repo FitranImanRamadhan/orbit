@@ -1073,12 +1073,13 @@ class TicketingController extends Controller
             })
             ->first();
 
+        // ===== LEVEL 4 =====
         $level4UsernamePemohon = $hirarki_pemohon->level4 ?? null;
         $level4UserPemohon = $level4UsernamePemohon
             ? DB::table('users as u')
                 ->leftJoin('plants as p', 'p.id_plant', '=', 'u.plant_id')
                 ->leftJoin('departemens as d', 'd.id_departemen', '=', 'u.departemen_id')
-                ->leftJoin('positions as pos', 'pos.id_position', '=', 'u.position_id') // ganti sesuai nama field
+                ->leftJoin('positions as pos', 'pos.id_position', '=', 'u.position_id')
                 ->select(
                     'u.nama_lengkap',
                     'p.label as nama_plant',
@@ -1088,11 +1089,55 @@ class TicketingController extends Controller
                 ->where('u.username', $level4UsernamePemohon)
                 ->first()
             : null;
-
         $namaLevel4Pemohon       = $level4UserPemohon->nama_lengkap ?? '-';
         $namaPlantLevel4Pemohon  = $level4UserPemohon->nama_plant ?? '-';
         $namaDeptLevel4Pemohon   = $level4UserPemohon->nama_departemen ?? '-';
         $namaPosLevel4Pemohon    = $level4UserPemohon->nama_position ?? '-';
+
+        // ===== LEVEL 3 =====
+        $level3UsernamePemohon = $hirarki_pemohon->level3 ?? null;
+        $level3UserPemohon = $level3UsernamePemohon
+            ? DB::table('users as u')
+                ->leftJoin('plants as p', 'p.id_plant', '=', 'u.plant_id')
+                ->leftJoin('departemens as d', 'd.id_departemen', '=', 'u.departemen_id')
+                ->leftJoin('positions as pos', 'pos.id_position', '=', 'u.position_id')
+                ->select(
+                    'u.nama_lengkap',
+                    'p.label as nama_plant',
+                    'd.nama_departemen',
+                    'pos.nama_position'
+                )
+                ->where('u.username', $level3UsernamePemohon)
+                ->first()
+            : null;
+
+        $namaLevel3Pemohon       = $level3UserPemohon->nama_lengkap ?? '-';
+        $namaPlantLevel3Pemohon  = $level3UserPemohon->nama_plant ?? '-';
+        $namaDeptLevel3Pemohon   = $level3UserPemohon->nama_departemen ?? '-';
+        $namaPosLevel3Pemohon    = $level3UserPemohon->nama_position ?? '-';
+
+
+        // ===== LEVEL 2 =====
+        $level2UsernamePemohon = $hirarki_pemohon->level2 ?? null;
+        $level2UserPemohon = $level2UsernamePemohon
+            ? DB::table('users as u')
+                ->leftJoin('plants as p', 'p.id_plant', '=', 'u.plant_id')
+                ->leftJoin('departemens as d', 'd.id_departemen', '=', 'u.departemen_id')
+                ->leftJoin('positions as pos', 'pos.id_position', '=', 'u.position_id')
+                ->select(
+                    'u.nama_lengkap',
+                    'p.label as nama_plant',
+                    'd.nama_departemen',
+                    'pos.nama_position'
+                )
+                ->where('u.username', $level2UsernamePemohon)
+                ->first()
+            : null;
+
+        $namaLevel2Pemohon       = $level2UserPemohon->nama_lengkap ?? '-';
+        $namaPlantLevel2Pemohon  = $level2UserPemohon->nama_plant ?? '-';
+        $namaDeptLevel2Pemohon   = $level2UserPemohon->nama_departemen ?? '-';
+        $namaPosLevel2Pemohon    = $level2UserPemohon->nama_position ?? '-';
 
 
         // ===================== IT FINISH =====================
@@ -1145,39 +1190,48 @@ class TicketingController extends Controller
                 ->where('u.username', $level2UsernameIt)
                 ->first()
             : null;
-
         // Nama lengkap dan detail
         $namaLevel3It      = $level3UserIt->nama_lengkap ?? '-';
         $namaPlantLevel3It = $level3UserIt->nama_plant ?? '-';
         $namaDeptLevel3It  = $level3UserIt->nama_departemen ?? '-';
         $namaPosLevel3It   = $level3UserIt->nama_position ?? '-';
-
         $namaLevel2It      = $level2UserIt->nama_lengkap ?? '-';
         $namaPlantLevel2It = $level2UserIt->nama_plant ?? '-';
         $namaDeptLevel2It  = $level2UserIt->nama_departemen ?? '-';
         $namaPosLevel2It   = $level2UserIt->nama_position ?? '-';
 
         //untuk qr
-        $qrPemohon          = 'Nama: '.$data->nama_pemohon."\nPosisi: ".$data->position_user_create."\nDept: ".$data->dept_name_user_create."\nPlant: ".$data->plant_name_user_create;
-        $qrLevel4Pemohon    = 'Nama: '.$namaLevel4Pemohon."\nPosisi: ".$namaPosLevel4Pemohon."\nDept: ".$namaDeptLevel4Pemohon."\nPlant: ".$namaPlantLevel4Pemohon;
+        $qrPemohon      = 'Nama: '.$data->nama_pemohon."\nPosisi: ".$data->position_user_create."\nDept: ".$data->dept_name_user_create."\nPlant: ".$data->plant_name_user_create;
+        $qrLevel4Pemohon='Nama:'.$namaLevel4Pemohon."\nPosisi:".$namaPosLevel4Pemohon."\nDept:".$namaDeptLevel4Pemohon."\nPlant:".$namaPlantLevel4Pemohon;
+        $qrLevel3Pemohon='Nama:'.$namaLevel3Pemohon."\nPosisi:".$namaPosLevel3Pemohon."\nDept:".$namaDeptLevel3Pemohon."\nPlant:".$namaPlantLevel3Pemohon;
+        $qrLevel2Pemohon='Nama:'.$namaLevel2Pemohon."\nPosisi:".$namaPosLevel2Pemohon."\nDept:".$namaDeptLevel2Pemohon."\nPlant:".$namaPlantLevel2Pemohon;
+
         $qrItFinish         = 'Nama: '.$data->nama_it."\nPosisi: ".$data->position_it_finish."\nDept: ".$data->dept_name_it_finish."\nPlant: ".$data->plant_name_it_finish;
         $qrLevel3It         = 'Nama: '.$namaLevel3It."\nPosisi: ".$namaPosLevel3It."\nDept: ".$namaDeptLevel3It."\nPlant: ".$namaPlantLevel3It;
         $qrLevel2It         = 'Nama: '.$namaLevel2It."\nPosisi: ".$namaPosLevel2It."\nDept: ".$namaDeptLevel2It."\nPlant: ".$namaPlantLevel2It;
         // generate QR base64
         $qrPemohonBase64       = 'data:image/svg+xml;base64,' . base64_encode(QrCode::format('svg')->size(100)->generate($qrPemohon));
-        $qrLevel4PemohonBase64 = 'data:image/svg+xml;base64,' . base64_encode(QrCode::format('svg')->size(100)->generate($qrLevel4Pemohon));
+        $qrLevel4PemohonBase64 ='data:image/svg+xml;base64,'.base64_encode(QrCode::format('svg')->size(100)->generate($qrLevel4Pemohon));
+        $qrLevel3PemohonBase64 ='data:image/svg+xml;base64,'.base64_encode(QrCode::format('svg')->size(100)->generate($qrLevel3Pemohon));
+        $qrLevel2PemohonBase64 ='data:image/svg+xml;base64,'.base64_encode(QrCode::format('svg')->size(100)->generate($qrLevel2Pemohon));
         $qrItFinishBase64      = 'data:image/svg+xml;base64,' . base64_encode(QrCode::format('svg')->size(100)->generate($qrItFinish));
         $qrLevel3ItBase64      = 'data:image/svg+xml;base64,' . base64_encode(QrCode::format('svg')->size(100)->generate($qrLevel3It));
         $qrLevel2ItBase64      = 'data:image/svg+xml;base64,' . base64_encode(QrCode::format('svg')->size(100)->generate($qrLevel2It));
 
-
-
         $html = view('ticketings.incoming_software_pdf', [
                     'data'                      => $data,
-                    'namaLevel4Pemohon'         => $namaLevel4Pemohon,
-                    'namaPlantLevel4Pemohon'    => $namaPlantLevel4Pemohon,
-                    'namaDeptLevel4Pemohon'     => $namaDeptLevel4Pemohon,
-                    'namaPosLevel4Pemohon'      => $namaPosLevel4Pemohon,
+                    'namaLevel4Pemohon'         =>$namaLevel4Pemohon,
+                    'namaPlantLevel4Pemohon'    =>$namaPlantLevel4Pemohon,
+                    'namaDeptLevel4Pemohon'     =>$namaDeptLevel4Pemohon,
+                    'namaPosLevel4Pemohon'      =>$namaPosLevel4Pemohon,
+                    'namaLevel3Pemohon'         =>$namaLevel3Pemohon,
+                    'namaPlantLevel3Pemohon'    =>$namaPlantLevel3Pemohon,
+                    'namaDeptLevel3Pemohon'     =>$namaDeptLevel3Pemohon,
+                    'namaPosLevel3Pemohon'      =>$namaPosLevel3Pemohon,
+                    'namaLevel2Pemohon'         =>$namaLevel2Pemohon,
+                    'namaPlantLevel2Pemohon'    =>$namaPlantLevel2Pemohon,
+                    'namaDeptLevel2Pemohon'     =>$namaDeptLevel2Pemohon,
+                    'namaPosLevel2Pemohon'      =>$namaPosLevel2Pemohon,
                     'namaLevel3It'              => $namaLevel3It,
                     'namaPlantLevel3It'         => $namaPlantLevel3It,  
                     'namaDeptLevel3It'          => $namaDeptLevel3It,
@@ -1188,6 +1242,8 @@ class TicketingController extends Controller
                     'namaPosLevel2It'           => $namaPosLevel2It,
                     'qrPemohonBase64'           => $qrPemohonBase64,
                     'qrLevel4PemohonBase64'     => $qrLevel4PemohonBase64,
+                    'qrLevel3PemohonBase64'     => $qrLevel3PemohonBase64,
+                    'qrLevel2PemohonBase64'     => $qrLevel2PemohonBase64,
                     'qrItFinishBase64'          => $qrItFinishBase64,
                     'qrLevel3ItBase64'          => $qrLevel3ItBase64,
                     'qrLevel2ItBase64'          => $qrLevel2ItBase64,

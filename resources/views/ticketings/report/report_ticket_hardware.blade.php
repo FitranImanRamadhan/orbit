@@ -203,11 +203,12 @@ function applyFilter() {
                 $('#sum_network').text(res.sum_totals.sum_network);
                 $('#sum_software').text(res.sum_totals.sum_software);
             } else {
-                Swal.fire('Error', res.message, 'error');
+                 Swal.fire('Warning', res.message, 'warning');
             }
         },
-        error: function () {
-            Swal.fire('Error', 'Gagal mengambil data', 'error');
+        error: function (xhr) {
+            let msg = xhr.responseJSON?.message || xhr.responseText || 'Terjadi Kesalahan Server';
+            Swal.fire('Error', msg, 'error');
         }
     });
 }
@@ -262,8 +263,9 @@ function reportingData() {
                         Swal.fire('Gagal', res.message, 'info');
                     }
                 },
-                error: function () {
-                    Swal.fire('Error', 'Gagal menyimpan reporting', 'error');
+                error: function (xhr) {
+                    let msg = xhr.responseJSON?.message || xhr.responseText || 'Terjadi Kesalahan Server';
+                    Swal.fire('Error', msg, 'error');
                 }
             });
         }

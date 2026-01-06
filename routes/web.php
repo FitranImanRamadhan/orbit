@@ -176,21 +176,17 @@ Route::middleware('auth')->group(function () {
             Route::get('/report/report_ticket_software', [ReportController::class, 'report_ticket_software'])->name('ticketing.report_ticket_software');
             Route::post('/data_report_software', [TicketingController::class, 'data_report_software'])->name('ticketing.data_report_software');
             Route::post('/report/data_report_ticket_software', [ReportController::class, 'data_report_ticket_software'])->name('ticketing.data_report_ticket_software');
-            Route::get('/report/chart_ticket_software', function () {
-                return view('ticketings.report.chart_ticket_software');
-            });
+            Route::get('/report/chart_ticket_software', function () { return view('ticketings.report.chart_ticket_software');});
             Route::post('/report/data_chart_ticket_software', [ReportController::class, 'data_chart_ticket_software'])->name('ticketing.data_chart_ticket_software');
         });
-
+        Route::post('/report/create_report_ticket', [ReportController::class, 'create_report_ticket'])->name('ticketing.create_report_ticket');
         //report hw
         Route::middleware(['auth', 'akses:developer,isTS'])->group(function () {
             Route::get('/report/report_ticket_hardware', [ReportController::class, 'report_ticket_hardware'])->name('ticketing.report_ticket_hardware');
             Route::post('/report/data_report_ticket_hardware', [ReportController::class, 'data_report_ticket_hardware'])->name('ticketing.data_report_ticket_hardware');
-            Route::get('/report/chart_ticket_hardware', function () {
-                return view('ticketings.report.chart_ticket_hardware');
-            });
+            Route::get('/report/chart_ticket_hardware', function () {return view('ticketings.report.chart_ticket_hardware');});
             Route::post('/report/data_chart_ticket_hardware', [ReportController::class, 'data_chart_ticket_hardware'])->name('ticketing.data_chart_ticket_hardware');
-            Route::post('/report/create_report_ticket', [ReportController::class, 'create_report_ticket'])->name('ticketing.create_report_ticket');
+            
         });
 
         Route::middleware(['auth', 'akses:developer,superAdmin'])->group(function () {
