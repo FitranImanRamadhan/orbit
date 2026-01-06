@@ -39,7 +39,7 @@ class ReportTicket extends Model
         'date_level3' => 'datetime',
     ];
 
-   protected function serializeDate(\DateTimeInterface $date)
+    protected function serializeDate(\DateTimeInterface $date)
     {
         return $date->format('Y-m-d H:i:s');
     }

@@ -11,6 +11,8 @@ use Maatwebsite\Excel\Facades\Excel;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Writer\PngWriter;
+use App\Helpers\NotificationHelper;
+use App\Models\Notification;
 
 class ReportController extends Controller
 {
@@ -430,6 +432,7 @@ class ReportController extends Controller
 
         DB::beginTransaction();
         try {
+
             ReportTicket::create([
                 'year' => $year,
                 'month' => $month,
@@ -441,6 +444,10 @@ class ReportController extends Controller
                 'status_ticket' => 'waiting',
             ]);
 
+            $ticket_no = 'RPT/' . $week . '/' . $month . '/' . $year;
+            $message = "Report ticket {$jenis_ticket} ({$ticket_no}) menunggu approval.";
+            NotificationHelper::send($ticket_no,$hirarki->level2,$plantId,$message);
+        
             DB::commit();
 
             return response()->json([

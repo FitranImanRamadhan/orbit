@@ -146,17 +146,30 @@
                 scrollX: true,
                 scrollCollapse: true,
                 data: [],
-                columns: [
-                    { data: 'created_at', className: 'text-center' },
-                    { data: 'year',       className: 'text-center' },
-                    { data: 'month',      className: 'text-center' },
-                    { data: 'week',       className: 'text-center' },
-                    { data: 'jenis_ticket',
+                columns: [{
+                        data: 'created_at',
+                        className: 'text-center'
+                    },
+                    {
+                        data: 'year',
+                        className: 'text-center'
+                    },
+                    {
+                        data: 'month',
+                        className: 'text-center'
+                    },
+                    {
+                        data: 'week',
+                        className: 'text-center'
+                    },
+                    {
+                        data: 'jenis_ticket',
                         render: function(data) {
                             return data.charAt(0).toUpperCase() + data.slice(1);
                         }
                     },
-                    { data: 'status_approval',
+                    {
+                        data: 'status_approval',
                         className: 'text-center',
                         render: function(data) {
                             if (!data) {
@@ -189,15 +202,37 @@
                 scrollCollapse: true,
                 searching: false,
                 ordering: true,
-                columns: [
-                    { data: 'nama_departemen' },
-                    { data: 'manpower', className: 'text-center' },
-                    { data: 'hardware', className: 'text-center' },
-                    { data: 'network',  className: 'text-center' },
-                    { data: 'software', className: 'text-center' },
-                    { data: 'solved',   className: 'text-center' },
-                    { data: 'unsolved', className: 'text-center' },
-                    { data: 'total',    className: 'text-center fw-semibold' }
+                columns: [{
+                        data: 'nama_departemen'
+                    },
+                    {
+                        data: 'manpower',
+                        className: 'text-center'
+                    },
+                    {
+                        data: 'hardware',
+                        className: 'text-center'
+                    },
+                    {
+                        data: 'network',
+                        className: 'text-center'
+                    },
+                    {
+                        data: 'software',
+                        className: 'text-center'
+                    },
+                    {
+                        data: 'solved',
+                        className: 'text-center'
+                    },
+                    {
+                        data: 'unsolved',
+                        className: 'text-center'
+                    },
+                    {
+                        data: 'total',
+                        className: 'text-center fw-semibold'
+                    }
                 ]
             });
 
@@ -257,32 +292,36 @@
                         Swal.fire('Error', 'Gagal mengambil data', 'error');
                     }
                 });
+                const btnApprove = $('#btnApproved');
+                const btnReject = $('#btnNotApproved');
+
+                // RESET STATE (WAJIB)
+                $('#btnApproved').hide();
+                $('#btnNotApproved').hide();
+                console.log('currentUser:', currentUser);
+                console.log('rowData.approver_level2:', rowData.approver_level2);
+                console.log('rowData.status_level2:', rowData.status_level2);
+                let hideButtons = true;
+                if (jenis_ticket === 'software' || jenis_ticket === 'hardware') {
+                    if (currentUser === rowData.approver_level2 && rowData.status_level2 == null) {
+                        hideButtons = false;
+                    }
+                    if (currentUser === rowData.approver_level3 && rowData.status_level3 == null) {
+                        hideButtons = false;
+                    }
+                }
+
+                // TAMPILKAN JIKA BOLEH
+                if (!hideButtons) {
+                    $('#btnApproved').show();
+                    $('#btnNotApproved').show();
+                }
             });
             $('#detailTicketModal').on('hidden.bs.modal', function() {});
 
             // --- Show/hide tombol Approve/Reject berdasarkan status ---
-            const btnApprove = $('#btnApproved');
-            const btnReject = $('#btnNotApproved');
-
-            let hideButtons = true; 
-            
-            if (jenis_ticket === 'software' || jenis_ticket === 'hardware') {
-                if (currentUser === rowData.approver_level2 && (rowData.status_level2 === null || rowData.status_level2 === undefined)) {
-                    hideButtons = false;
-                }
-                if (currentUser === rowData.approver_level3  && (rowData.status_level3 === null || rowData.status_level3 === undefined)) {
-                    hideButtons = false;
-                }
-            }
 
 
-            if (hideButtons) {
-                $('#btnApproved').hide();
-                $('#btnNotApproved').hide();
-            } else {
-                $('#btnApproved').show();
-                $('#btnNotApproved').show();
-            }
         });
 
 
@@ -310,7 +349,7 @@
                     }
                     table.clear().rows.add(res.data).draw();
                 },
-                error: function (xhr) {
+                error: function(xhr) {
                     Swal.fire('Error', 'Terjadi Kesalahan Server', 'error');
                     console.error(xhr.responseText);
                 }
@@ -441,9 +480,19 @@
                 return;
             }
 
-            const { year, month, week, jenis_ticket } = rowData;
+            const {
+                year,
+                month,
+                week,
+                jenis_ticket
+            } = rowData;
 
-            const params = $.param({ year, month, week, jenis_ticket });
+            const params = $.param({
+                year,
+                month,
+                week,
+                jenis_ticket
+            });
             console.log(params);
             window.location.href = '/ticketings/report/export_excel?' + params;
         }

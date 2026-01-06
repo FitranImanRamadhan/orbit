@@ -19,7 +19,7 @@ class CheckAccess
         $isDev              = ($isIT && $user->user_akses === 'developer');
         $isSuperAdmin       = ($isIT && $user->user_akses === 'super_admin');
         $isImplementator    = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [34, 37, 1006]));
-        $isTS               = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [32, 1007]));
+        $isTS               = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [32, 34, 1007]));
         $isleaderimp        = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1006]));
         $isleaderts         = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1007]));
 
