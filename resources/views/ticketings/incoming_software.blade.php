@@ -48,8 +48,8 @@
                         <th>Dept</th>
                         <th>Plant</th>
                         <th>Nama</th>
-                        <th>Kategori Klaim</th>
                         <th>Tanggal</th>
+                        <th>Kategori Klaim</th>
                         <th>Status</th>
                         {{-- <th>Form Klaim</th> --}}
                     </tr>
@@ -182,6 +182,7 @@
                 scrollY: '400px',
                 scrollX: true,
                 scrollCollapse: true,
+                ordering: false,
                 columns: [
                     { data: 'ticket_no', width: "120px"},
                     { data: 'nama_software', width: "150px" },
@@ -189,9 +190,11 @@
                     { data: 'nama_plant', width: "150px"},
                     { data: 'nama_lengkap', width: "150px" },
                     { 
-                      data: 'kategori_klaim', 
+                      data: 'tgl_permintaan', 
                       className: 'text-start', 
-                      width: "100px",
+                      width: "150px"
+                    },
+                    { data: 'kategori_klaim', width: "120px",
                       render: function(data, type, row) {
                           switch(data) {
                               case 'ui': return 'UI';
@@ -201,7 +204,6 @@
                           }
                       }
                     },
-                    { data: 'tgl_permintaan', width: "120px"},
                     { data: 'status_problem',
                         render: function(data) {
                             let badge = '';
@@ -278,7 +280,12 @@
                     `);
                 });
 
-                $('#detailTicketModal').modal('show');
+                if(rowData.status_approval !== 'approved'){
+                    Swal.fire('Warning','Ticket belum full approve, belum bisa dikerjakan!', 'warning');
+                } else {
+                    $('#detailTicketModal').modal('show'); // Bootstrap 4
+                    
+                }
                 // ====== STATUS HANDLING ======
                 if (rowData.status_problem === 'on_progress') {
                     $('#btnStart').addClass('disabled');

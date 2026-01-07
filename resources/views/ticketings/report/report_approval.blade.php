@@ -134,10 +134,12 @@
     <script>
         let table;
         let table2;
+        let selectedRowData = null;
         let doughnutChart, pieChart;
         let currentUser = "{{ Auth::user()->username }}";
 
         $(document).ready(function() {
+            resetFilter();
             table = $('#tabel').DataTable({
                 processing: true,
                 serverSide: false,
@@ -146,41 +148,22 @@
                 scrollX: true,
                 scrollCollapse: true,
                 data: [],
-                columns: [{
-                        data: 'created_at',
-                        className: 'text-center'
-                    },
-                    {
-                        data: 'year',
-                        className: 'text-center'
-                    },
-                    {
-                        data: 'month',
-                        className: 'text-center'
-                    },
-                    {
-                        data: 'week',
-                        className: 'text-center'
-                    },
-                    {
-                        data: 'jenis_ticket',
+                columns: [
+                    { data: 'created_at', className: 'text-center' },
+                    { data: 'year', className: 'text-center' },
+                    { data: 'month', className: 'text-center' },
+                    { data: 'week', className: 'text-center' },
+                    { data: 'jenis_ticket',
                         render: function(data) {
                             return data.charAt(0).toUpperCase() + data.slice(1);
                         }
                     },
-                    {
-                        data: 'status_approval',
-                        className: 'text-center',
+                    { data: 'status_ticket', className: 'text-center',
                         render: function(data) {
-                            if (!data) {
-                                return '<span class="badge bg-warning text-dark">Waiting</span>';
-                            }
-                            if (data === 'approved') {
-                                return '<span class="badge bg-success">Approved</span>';
-                            }
-                            if (data === 'rejected') {
-                                return '<span class="badge bg-danger">Rejected</span>';
-                            }
+                            if (!data) { return '<span class="badge bg-secondary text-dark">-</span>'; }
+                            if (data === 'waiting') { return '<span class="badge bg-warning">Waiting</span>'; }
+                            if (data === 'approved') { return '<span class="badge bg-success">Approved</span>'; }
+                            if (data === 'rejected') { return '<span class="badge bg-danger">Rejected</span>';}
                             return data;
                         }
                     },
@@ -202,43 +185,22 @@
                 scrollCollapse: true,
                 searching: false,
                 ordering: true,
-                columns: [{
-                        data: 'nama_departemen'
-                    },
-                    {
-                        data: 'manpower',
-                        className: 'text-center'
-                    },
-                    {
-                        data: 'hardware',
-                        className: 'text-center'
-                    },
-                    {
-                        data: 'network',
-                        className: 'text-center'
-                    },
-                    {
-                        data: 'software',
-                        className: 'text-center'
-                    },
-                    {
-                        data: 'solved',
-                        className: 'text-center'
-                    },
-                    {
-                        data: 'unsolved',
-                        className: 'text-center'
-                    },
-                    {
-                        data: 'total',
-                        className: 'text-center fw-semibold'
-                    }
+                columns: [
+                    { data: 'nama_departemen'},
+                    { data: 'manpower', className: 'text-center'},
+                    { data: 'hardware', className: 'text-center'},
+                    { data: 'network', className: 'text-center' },
+                    { data: 'software', className: 'text-center' },
+                    { data: 'solved',  className: 'text-center' },
+                    { data: 'unsolved', className: 'text-center' },
+                    { data: 'total', className: 'text-center fw-semibold' }
                 ]
             });
 
 
             $('#tabel tbody').on('dblclick', 'tr', function() {
-                var rowData = table.row(this).data(); // ambil data baris yang di-dblclick
+                selectedRowData = table.row(this).data(); // 🔥 SIMPAN GLOBAL
+                var rowData = selectedRowData;
                 // Ambil nilai kolom yang diinginkan
                 var year = rowData.year;
                 var month = rowData.month;
@@ -288,43 +250,35 @@
                         }
                         $('#detailTicketModal').modal('show');
                     },
-                    error: function() {
-                        Swal.fire('Error', 'Gagal mengambil data', 'error');
+                    error: function(xhr) {
+                        let msg = 'Gagal mengambil data';
+
+                        // Ambil message dari backend (Laravel)
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            msg = xhr.responseJSON.message;
+                        }
+
+                        Swal.fire('Error', msg, 'error');
                     }
+
                 });
                 const btnApprove = $('#btnApproved');
                 const btnReject = $('#btnNotApproved');
 
-                // RESET STATE (WAJIB)
-                $('#btnApproved').hide();
-                $('#btnNotApproved').hide();
-                console.log('currentUser:', currentUser);
-                console.log('rowData.approver_level2:', rowData.approver_level2);
-                console.log('rowData.status_level2:', rowData.status_level2);
-                let hideButtons = true;
-                if (jenis_ticket === 'software' || jenis_ticket === 'hardware') {
-                    if (currentUser === rowData.approver_level2 && rowData.status_level2 == null) {
-                        hideButtons = false;
-                    }
-                    if (currentUser === rowData.approver_level3 && rowData.status_level3 == null) {
-                        hideButtons = false;
-                    }
-                }
-
-                // TAMPILKAN JIKA BOLEH
-                if (!hideButtons) {
-                    $('#btnApproved').show();
-                    $('#btnNotApproved').show();
+                btnApprove.hide();
+                btnReject.hide();
+                console.table(rowData);
+                if ((jenis_ticket === 'software' || jenis_ticket === 'hardware') && rowData.need_approve ===
+                    true) {
+                    btnApprove.show();
+                    btnReject.show();
                 }
             });
             $('#detailTicketModal').on('hidden.bs.modal', function() {});
 
             // --- Show/hide tombol Approve/Reject berdasarkan status ---
 
-
         });
-
-
 
         function applyFilter() {
             if (!$('#filter_status_approval').val()) {
@@ -339,7 +293,7 @@
                 url: '/ticketings/report/data_report_approval',
                 type: 'post',
                 data: {
-                    status_approval: $('#filter_status_approval').val()
+                    status_ticket: $('#filter_status_approval').val()
                 },
                 success: function(res) {
                     if (!res.success) {
@@ -497,7 +451,53 @@
             window.location.href = '/ticketings/report/export_excel?' + params;
         }
 
+        function btnApproved() {
+            submitApproval("approved");
+        }
 
+        function btnNotApproved() {
+            submitApproval("rejected");
+        }
+
+        function submitApproval(status) {
+            if (!selectedRowData) {
+                Swal.fire('Warning', 'Data belum dipilih', 'warning');
+                return;
+            }
+
+            // Ambil data dari row terpilih
+            const jenis_ticket = selectedRowData.jenis_ticket;
+            const year = selectedRowData.year;
+            const month = selectedRowData.month;
+            const week = selectedRowData.week;
+
+            $.ajax({
+                url: '/ticketings/report/proses_approval_report_ticket',
+                type: "POST",
+                data: { status: status, jenis_ticket: jenis_ticket, year: year, month: month, week: week},
+                success: function(res) {
+                    if (res.success) {
+                        Swal.fire({ icon: "success", title: "Success",  text: res.message, timer: 2000, showConfirmButton: false});
+                        setTimeout(() => {
+                            $('#detailTicketModal').modal('hide');
+                            resetFilter(); // reload data
+                        }, 2000);
+                    } else {
+                        Swal.fire('Warning', res.message, 'warning');
+                    }
+
+                },
+                error: function(xhr) {
+                    let msg = "Terjadi kesalahan Server";
+
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+
+                    Swal.fire("Gagal", msg, "error");
+                }
+            });
+        }
 
 
         function resetFilter() {

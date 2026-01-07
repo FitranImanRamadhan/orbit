@@ -187,7 +187,7 @@ class TicketingController extends Controller
             // 1. Generate no ticket
             $plantId = Auth::user()->plant_id;
             $plant = DB::table('plants')->where('id_plant', $plantId)->first();
-            $label_plant = $plant->label ?? 'UNKNOWN';
+            $label_plant = $plant->label ?? '-';
             $ticketTypeCode = strtolower($request->jenisTicket) == 'software' ? 'SW' : 'HW';
             $today = now()->format('Y-m-d');
             $day = now()->format('d');
@@ -404,13 +404,7 @@ class TicketingController extends Controller
                     }
                 }
             } elseif ($ticket->jenis_ticket === 'hardware') {
-
-                if (
-                    isset($approvalFlow[3]) &&
-                    $maker_level < 3 &&
-                    is_null($approvalFlow[3]['status']) &&
-                    $username === $approvalFlow[3]['username']
-                ) {
+                if (isset($approvalFlow[3]) && $maker_level < 3 && is_null($approvalFlow[3]['status']) && $username === $approvalFlow[3]['username']) {
                     $show_ticket = true;
                     $need_approve = true;
                 }
@@ -714,6 +708,8 @@ class TicketingController extends Controller
             ->leftJoin('departemens as c', 'b.departemen_id', '=', 'c.id_departemen')
             ->leftJoin('softwares as d', 'a.item_ticket', '=', 'd.id_software')
             ->leftJoin('plants as f', 'b.plant_id', '=', 'f.id_plant')
+            ->whereNotNull('a.status_problem')               // status_problem bukan null
+            ->where('a.status_problem', '!=', 'canceled')   // status_problem bukan 'canceled'
             ->select(
                 'a.*',
                 'b.nama_lengkap as nama_lengkap',
@@ -727,7 +723,9 @@ class TicketingController extends Controller
         if ($request->status_problem) $query->where('status_problem', $request->status_problem);
         if ($request->kategori_klaim) $query->where('kategori_klaim', $request->kategori_klaim);
 
-        $ticketings = $query->orderBy('tgl_permintaan', 'desc')->get();
+        $ticketings = $query->orderByRaw("CASE WHEN a.status_problem = 'open' THEN 0 ELSE 1 END")
+                            ->orderBy('tgl_permintaan', 'desc')
+                            ->get();
         if ($ticketings->isEmpty()) {
             return response()->json([
                 'success' => false,
@@ -823,6 +821,8 @@ class TicketingController extends Controller
             ->leftJoin('hardwares as d', 'a.item_ticket', '=', 'd.id_hardware')
             ->leftJoin('plants as f', 'b.plant_id', '=', 'f.id_plant')
             ->where('jenis_ticket', $request->jenis_ticket)
+            ->whereNotNull('a.status_problem')               // status_problem bukan null
+            ->where('a.status_problem', '!=', 'canceled')   // status_problem bukan 'canceled'
             ->select(
                 'a.*',
                 'b.nama_lengkap as nama_lengkap',
@@ -841,7 +841,10 @@ class TicketingController extends Controller
         }
         // dd($query->toSql(), $query->getBindings());
         // dd($query->get());  
-        $ticketings = $query->orderBy('tgl_permintaan', 'desc')->get();
+        $ticketings = $query->orderByRaw("CASE WHEN a.status_problem = 'open' THEN 0 ELSE 1 END")
+                            ->orderBy('tgl_permintaan', 'desc')
+                            ->get();
+
         if ($ticketings->isEmpty()) {
             return response()->json([
                 'success' => false,

@@ -172,21 +172,25 @@ Route::middleware('auth')->group(function () {
         });
 
         //report sw
-        Route::middleware(['auth', 'akses:developer,isImplementator'])->group(function () {
+        Route::middleware(['auth', 'akses:developer,isLeaderImp,isImplementator,isAsmenIt'])->group(function () {
             Route::get('/report/report_ticket_software', [ReportController::class, 'report_ticket_software'])->name('ticketing.report_ticket_software');
             Route::post('/data_report_software', [TicketingController::class, 'data_report_software'])->name('ticketing.data_report_software');
             Route::post('/report/data_report_ticket_software', [ReportController::class, 'data_report_ticket_software'])->name('ticketing.data_report_ticket_software');
-            Route::get('/report/chart_ticket_software', function () { return view('ticketings.report.chart_ticket_software');});
+            Route::get('/report/chart_ticket_software', function () {
+                return view('ticketings.report.chart_ticket_software');
+            });
             Route::post('/report/data_chart_ticket_software', [ReportController::class, 'data_chart_ticket_software'])->name('ticketing.data_chart_ticket_software');
         });
+
         Route::post('/report/create_report_ticket', [ReportController::class, 'create_report_ticket'])->name('ticketing.create_report_ticket');
         //report hw
-        Route::middleware(['auth', 'akses:developer,isTS'])->group(function () {
+        Route::middleware(['auth', 'akses:developer,isLeaderImp,isTS,isAsmenIt'])->group(function () {
             Route::get('/report/report_ticket_hardware', [ReportController::class, 'report_ticket_hardware'])->name('ticketing.report_ticket_hardware');
             Route::post('/report/data_report_ticket_hardware', [ReportController::class, 'data_report_ticket_hardware'])->name('ticketing.data_report_ticket_hardware');
-            Route::get('/report/chart_ticket_hardware', function () {return view('ticketings.report.chart_ticket_hardware');});
+            Route::get('/report/chart_ticket_hardware', function () {
+                return view('ticketings.report.chart_ticket_hardware');
+            });
             Route::post('/report/data_chart_ticket_hardware', [ReportController::class, 'data_chart_ticket_hardware'])->name('ticketing.data_chart_ticket_hardware');
-            
         });
 
         Route::middleware(['auth', 'akses:developer,superAdmin'])->group(function () {
@@ -194,6 +198,10 @@ Route::middleware('auth')->group(function () {
             Route::get('/report/export_excel', [ReportController::class, 'export_excel']);
             Route::post('/report/data_report_approval', [ReportController::class, 'data_report_approval'])->name('ticketing.data_report_approval');
         });
+        Route::middleware(['auth', 'akses:developer,isLeaderTs,isLeaderImp,isAsmenIt'])->group(function () {
+            Route::post('/report/proses_approval_report_ticket', [ReportController::class, 'proses_approval_report_ticket'])->name('ticketing.proses_approval_report_ticket');
+        });
+
         Route::get('/user_confirm_hardware', [TicketingController::class, 'user_confirm_hardware'])->name('ticketing.user_confirm_hardware');
         Route::post('/data_user_confirm_hardware', [TicketingController::class, 'data_user_confirm_hardware'])->name('ticketing.data_user_confirm_hardware');
         Route::post('/proses_user_confirm_hardware', [TicketingController::class, 'proses_user_confirm_hardware'])->name('ticketing.proses_user_confirm_hardware');

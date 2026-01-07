@@ -149,6 +149,7 @@
           scrollY: '400px',
           scrollX: true,
           scrollCollapse: true,
+          ordering: false,
           columns: [
               { data: 'ticket_no', width: "180px"},
               { data: 'nama_hardware', width: "150px" },
@@ -230,7 +231,13 @@
               `);
           });
 
-          $('#detailTicketModal').modal('show');
+          if(rowData.status_approval !== 'approved'){
+              Swal.fire('Warning','Ticket belum full approve, belum bisa dikerjakan!', 'warning');
+          } else {
+              $('#detailTicketModal').modal('show'); // Bootstrap 4
+            
+          }
+
           // ====== STATUS HANDLING ======
           if (rowData.status_problem === 'on_progress') {
               $('#btnStart').addClass('disabled');
@@ -244,6 +251,7 @@
               $('#btnStart').addClass('disabled');
               $('#btnFinish').addClass('disabled');
               setFormDisabled(true);
+              if (rowData.time_start) $('#start_time').text(rowData.time_start);
               if (rowData.time_finish) $('#finish_time').text(rowData.time_finish);
           } else { // OPEN
               $('#btnStart').removeClass('disabled');

@@ -41,32 +41,37 @@ class NotificationController extends Controller
 
         $validNotifications = [];
         $invalidIds = [];
+
         foreach ($notifications as $notif) {
+
+            // ✅ JIKA REPORT TICKET → LANGSUNG VALID
+            if (str_starts_with($notif->ticket_no, 'RPT/')) {
+                $validNotifications[] = $notif;
+                continue;
+            }
+
+            // Ticket normal → cek ke tbl_tickets
             $ticketExists = DB::table('tbl_tickets')
                 ->where('ticket_no', $notif->ticket_no)
                 ->exists();
 
             if ($ticketExists) {
-                // Masukkan hanya yang valid
                 $validNotifications[] = $notif;
             } else {
-                // Simpan ID untuk dihapus
                 $invalidIds[] = $notif->id;
             }
         }
 
-        // Hapus invalid dari tabel notifications
+        // Hapus hanya yang benar-benar invalid
         if (!empty($invalidIds)) {
             Notification::whereIn('id', $invalidIds)->delete();
         }
 
-        // Hitung ulang unread yang valid
-        $unread = count($validNotifications);
-
         return response()->json([
-            'count' => $unread,
+            'count' => count($validNotifications),
             'notifications' => $validNotifications
         ]);
+
     }
 
 

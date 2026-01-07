@@ -8,10 +8,14 @@
     
     $isDev              = ($isIT && $user->user_akses === 'developer');
     $isSuperAdmin       = ($isIT && $user->user_akses === 'super_admin');
-    $isImplementator    = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [34, 37, 1006]));
-    $isTS               = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [32, 1007]));
-    $isleaderimp        = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1006]));
-    $isleaderts         = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1007]));
+    $isImplementator    = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [37, 1006]));
+    $isTS               = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [34, 32, 1007]));
+    $isLeaderImp        = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1006]));
+    $isLeaderTs         = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1007]));
+    $isAdminIt          = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [34]));
+    $isAsmenIt          = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1001]));
+
+    //non it
     $isUserNonIT        = ($isNonIT && $user->user_akses === 'user');
     $isAdmin            = ($isNonIT && $user->user_akses === 'admin');
 @endphp
@@ -115,10 +119,10 @@
                         <i class="fa fa-inbox icon"></i><span class="text nav-text">Incoming Ticket</span>
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="incomingDropdown">
-                        @if($isDev || $isImplementator)
+                        @if($isDev || $isLeaderImp || $isImplementator)
                             <li><a class="dropdown-item {{ request()->routeIs('ticketing.incoming_software') ? 'active' : '' }}" href="{{ route('ticketing.incoming_software') }}">Software</a></li>
                         @endif
-                        @if($isDev || $isTS)
+                        @if($isDev || $isLeaderTs || $isTS)
                             <li><a class="dropdown-item {{ request()->routeIs('ticketing.incoming_hardware') ? 'active' : '' }}" href="{{ route('ticketing.incoming_hardware') }}">Hardware</a></li>
                         @endif
                     </ul>
@@ -131,17 +135,17 @@
                         <i class="fa fa-chart-bar icon"></i><span class="text nav-text">Report</span>
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="reportDropdown">
-                        @if($isDev || $isImplementator)
+                        @if($isDev || $isAsmenIt || $isLeaderImp || $isImplementator)
                         <li><a class="dropdown-item" href="{{ route('ticketing.report_ticket_software') }}">Software</a></li>
                         @endif
-                        @if($isDev || $isTS)
+                        @if($isDev || $isAsmenIt || $isLeaderTs || $isTS)
                         <li><a class="dropdown-item" href="{{ route('ticketing.report_ticket_hardware') }}">Hardware</a></li>
                         @endif
                     </ul>
                 </li>
                 @endif
 
-                @if($isDev || $isSuperAdmin)
+                @if($isDev || $isAsmenIt || $isLeaderImp || $isLeaderTs)
                 <li class="nav-item">
                     <a href="{{ route('ticketing.report_approval') }}" class="nav-link d-flex align-items-center {{ request()->routeIs('ticketing.report_approval') ? 'active' : '' }}">
                         <i class="fa fa-list icon"></i><span class="text nav-text">Report Approval</span>

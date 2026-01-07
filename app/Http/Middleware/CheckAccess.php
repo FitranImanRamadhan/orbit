@@ -18,10 +18,12 @@ class CheckAccess
         //IT
         $isDev              = ($isIT && $user->user_akses === 'developer');
         $isSuperAdmin       = ($isIT && $user->user_akses === 'super_admin');
-        $isImplementator    = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [34, 37, 1006]));
-        $isTS               = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [32, 34, 1007]));
-        $isleaderimp        = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1006]));
-        $isleaderts         = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1007]));
+        $isImplementator    = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [37, 1006]));
+        $isTS               = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [34, 32, 1007]));
+        $isLeaderImp        = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1006]));
+        $isLeaderTs         = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1007]));
+        $isAdminIt          = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [34]));
+        $isAsmenIt          = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1001]));
 
         //SELAIN IT
         $isUserNonIT        = (($isNonIT && $user->user_akses === 'user') || $isIT && $user->user_akses === 'user');
@@ -33,6 +35,10 @@ class CheckAccess
             'superAdmin'        => $isSuperAdmin,
             'isImplementator'   => $isImplementator,
             'isTS'              => $isTS,
+            'isLeaderImp'       => $isLeaderImp,
+            'isLeaderTs'        => $isLeaderTs,
+            'isAdminIt'         => $isAdminIt,
+            'isAsmenIt'         => $isAsmenIt,
             'userNonIT'         => $isUserNonIT,
             'admin'             => $isAdmin,
             'all'               => ($isDev || $isSuperAdmin || $isUserNonIT || $isAdmin),
