@@ -72,7 +72,7 @@
                              style="display:inline-block;
                                     background:${chat.is_me ? '#d1e7ff' : '#f1f1f1'};
                                     max-width:80%;">
-                            <small class="text-muted">${chat.sender}</small><br>
+                            <small class="text-muted">${chat.sender_name}</small><br>
                             ${chat.message ?? ''}<br>
                             ${chat.file_path ? `<a href="/storage/${chat.file_path}" target="_blank">📎 File</a>` : ''}
                         </div>

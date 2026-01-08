@@ -374,7 +374,7 @@ class TicketingController extends Controller
             if (!empty($ticket->approver_level4)) $approvalFlow[4] = ['username' => $ticket->approver_level4, 'status' => $ticket->status_level4];
 
             if ($ticket->jenis_ticket == 'software') {
-                
+
                 // NEXT APPROVER manual
                 // LEVEL 2
                 if (isset($approvalFlow[2]) && $maker_level < 2 && is_null($approvalFlow[2]['status']) && $username === $approvalFlow[2]['username']) {
@@ -486,11 +486,11 @@ class TicketingController extends Controller
                             $pesan_user = "Tiket $tiket->ticket_no telah disetujui pada tahap 1.";
                             NotificationHelper::send($tiket->ticket_no, $tiket->user_create, $plant_id_login, $pesan_user);
                         } else {
-                            $pesan = "Tiket $tiket->ticket_no anda telah ditolak.";
+                            $pesan = "Tiket $tiket->ticket_no anda telah ditolak pada tahap 1.";
                             NotificationHelper::send($tiket->ticket_no, $tiket->user_create, $plant_id_login, $pesan);
                         }
                     } else {
-                        return response()->json(['success' => false, 'message' => 'Level 2 sudah diapprove'], 403);
+                        return response()->json(['success' => false, 'message' => 'Tahap 2 sudah diapprove'], 403);
                     }
                 }
 
@@ -516,11 +516,11 @@ class TicketingController extends Controller
                             $pesan_user = "Tiket $tiket->ticket_no telah disetujui pada tahap 2.";
                             NotificationHelper::send($tiket->ticket_no, $tiket->user_create, $plant_id_login, $pesan_user);
                         } else {
-                            $pesan = "Tiket $tiket->ticket_no anda telah ditolak.";
+                            $pesan = "Tiket $tiket->ticket_no anda telah ditolak pada tahap 2.";
                             NotificationHelper::send($tiket->ticket_no, $tiket->user_create, $plant_id_login, $pesan);
                         }
                     } else {
-                        return response()->json(['success' => false, 'message' => 'Level 3 sudah diapprove'], 403);
+                        return response()->json(['success' => false, 'message' => 'Tahap 3 sudah diapprove'], 403);
                     }
                 }
 
@@ -530,7 +530,7 @@ class TicketingController extends Controller
                     if ((!empty($tiket->approver_level2) && $tiket->status_level2 !== TRUE) ||
                         (!empty($tiket->approver_level3) && $tiket->status_level3 !== TRUE)
                     ) {
-                        return response()->json(['success' => false, 'message' => 'Level sebelumnya belum approve'], 403);
+                        return response()->json(['success' => false, 'message' => 'Tahap sebelumnya belum approve'], 403);
                     }
 
                     if (is_null($tiket->status_level4) || $tiket->status_level4 === '') {
@@ -542,10 +542,10 @@ class TicketingController extends Controller
 
                         $pesan = $request->status == 'approved'
                             ? "Tiket anda($tiket->ticket_no) telah FULL APPROVED."
-                            : "Tiket anda ($tiket->ticket_no) DITOLAK oleh $pengguna_login pada Level 4.";
+                            : "Tiket anda ($tiket->ticket_no) Ditolah pada tahap 4.";
                         NotificationHelper::send($tiket->ticket_no, $tiket->user_create, $plant_id_login, $pesan);
                     } else {
-                        return response()->json(['success' => false, 'message' => 'Level 4 sudah diapprove'], 403);
+                        return response()->json(['success' => false, 'message' => 'Tahap 4 sudah diapprove'], 403);
                     }
                 }
 
@@ -588,7 +588,7 @@ class TicketingController extends Controller
                 }
 
                 // Update database
-                DB::table('tbl_tickets') ->where('ticket_no', $tiket->ticket_no)->update($update_data);
+                DB::table('tbl_tickets')->where('ticket_no', $tiket->ticket_no)->update($update_data);
             }
 
 
@@ -635,7 +635,8 @@ class TicketingController extends Controller
                 'd.nama_hardware as nama_hardware',
                 'e.nama_software as nama_software',
             )
-            ->where('b.departemen_id', $deptId);;
+            ->where('b.departemen_id', $deptId)
+            ->where('a.user_create', $user->username);
         if ($request->start_date && $request->end_date) $query->whereBetween('tgl_permintaan', [$request->start_date, $request->end_date]);
         if ($request->jenis_ticket) $query->where('jenis_ticket', $request->jenis_ticket);
         if ($request->status_approval) $query->where('status_approval', $request->status_approval);
@@ -709,7 +710,8 @@ class TicketingController extends Controller
             ->leftJoin('softwares as d', 'a.item_ticket', '=', 'd.id_software')
             ->leftJoin('plants as f', 'b.plant_id', '=', 'f.id_plant')
             ->whereNotNull('a.status_problem')               // status_problem bukan null
-            ->where('a.status_problem', '!=', 'canceled')   // status_problem bukan 'canceled'
+            ->where('a.status_problem', '!=', 'canceled')
+            ->where('a.status_approval', '=', 'approved')   // status_problem bukan 'canceled'
             ->select(
                 'a.*',
                 'b.nama_lengkap as nama_lengkap',
@@ -724,8 +726,8 @@ class TicketingController extends Controller
         if ($request->kategori_klaim) $query->where('kategori_klaim', $request->kategori_klaim);
 
         $ticketings = $query->orderByRaw("CASE WHEN a.status_problem = 'open' THEN 0 ELSE 1 END")
-                            ->orderBy('tgl_permintaan', 'desc')
-                            ->get();
+            ->orderBy('tgl_permintaan', 'desc')
+            ->get();
         if ($ticketings->isEmpty()) {
             return response()->json([
                 'success' => false,
@@ -820,9 +822,7 @@ class TicketingController extends Controller
             ->leftJoin('departemens as c', 'b.departemen_id', '=', 'c.id_departemen')
             ->leftJoin('hardwares as d', 'a.item_ticket', '=', 'd.id_hardware')
             ->leftJoin('plants as f', 'b.plant_id', '=', 'f.id_plant')
-            ->where('jenis_ticket', $request->jenis_ticket)
-            ->whereNotNull('a.status_problem')               // status_problem bukan null
-            ->where('a.status_problem', '!=', 'canceled')   // status_problem bukan 'canceled'
+            ->where('jenis_ticket', $request->jenis_ticket)  // status_problem bukan 'canceled'
             ->select(
                 'a.*',
                 'b.nama_lengkap as nama_lengkap',
@@ -842,8 +842,8 @@ class TicketingController extends Controller
         // dd($query->toSql(), $query->getBindings());
         // dd($query->get());  
         $ticketings = $query->orderByRaw("CASE WHEN a.status_problem = 'open' THEN 0 ELSE 1 END")
-                            ->orderBy('tgl_permintaan', 'desc')
-                            ->get();
+            ->orderBy('tgl_permintaan', 'desc')
+            ->get();
 
         if ($ticketings->isEmpty()) {
             return response()->json([
@@ -1031,59 +1031,40 @@ class TicketingController extends Controller
         ]);
 
         $data = Ticketing::from('tbl_tickets as a')
-        ->join('users as b', 'b.username', '=', 'a.user_create')
-        ->join('users as c', 'c.username', '=', 'a.it_finish')
-        ->leftJoin('softwares as d', 'a.item_ticket', '=', 'd.id_software')
-        ->leftJoin('plants as e', 'e.id_plant', '=', 'b.plant_id')          // plant pemohon
-        ->leftJoin('departemens as f', 'f.id_departemen', '=', 'b.departemen_id') // departemen pemohon
-        ->leftJoin('positions as g', 'g.id_position', '=', 'b.position_id')       // posisi pemohon
-        ->leftJoin('plants as h', 'h.id_plant', '=', 'c.plant_id')          // plant IT
-        ->leftJoin('departemens as i', 'i.id_departemen', '=', 'c.departemen_id') // departemen IT
-        ->leftJoin('positions as j', 'j.id_position', '=', 'c.position_id')      // posisi IT
-        ->select(
-            'a.*',
-            'b.username as user_create',
-            'b.plant_id as plant_id_user_create',
-            'e.nama_plant as plant_name_user_create',
-            'e.label',
-            'b.departemen_id as dept_id_user_create',
-            'f.nama_departemen as dept_name_user_create',
-            'g.nama_position as position_user_create',
-            'b.nama_lengkap as nama_pemohon',
+            ->join('users as b', 'b.username', '=', 'a.user_create')
+            ->join('users as c', 'c.username', '=', 'a.it_finish')
+            ->leftJoin('softwares as d', 'a.item_ticket', '=', 'd.id_software')
+            ->leftJoin('plants as e', 'e.id_plant', '=', 'b.plant_id')          // plant pemohon
+            ->leftJoin('departemens as f', 'f.id_departemen', '=', 'b.departemen_id') // departemen pemohon
+            ->leftJoin('positions as g', 'g.id_position', '=', 'b.position_id')       // posisi pemohon
+            ->leftJoin('plants as h', 'h.id_plant', '=', 'c.plant_id')          // plant IT
+            ->leftJoin('departemens as i', 'i.id_departemen', '=', 'c.departemen_id') // departemen IT
+            ->leftJoin('positions as j', 'j.id_position', '=', 'c.position_id')      // posisi IT
+            ->select(
+                'a.*',
+                'b.username as user_create',
+                'b.plant_id as plant_id_user_create',
+                'e.nama_plant as plant_name_user_create',
+                'e.label',
+                'b.departemen_id as dept_id_user_create',
+                'f.nama_departemen as dept_name_user_create',
+                'g.nama_position as position_user_create',
+                'b.nama_lengkap as nama_pemohon',
 
-            'c.username as it_finish',
-            'c.plant_id as plant_id_it_finish',
-            'h.nama_plant as plant_name_it_finish',
-            'c.departemen_id as dept_id_it_finish',
-            'i.nama_departemen as dept_name_it_finish',
-            'j.nama_position as position_it_finish',
-            'c.nama_lengkap as nama_it',
+                'c.username as it_finish',
+                'c.plant_id as plant_id_it_finish',
+                'h.nama_plant as plant_name_it_finish',
+                'c.departemen_id as dept_id_it_finish',
+                'i.nama_departemen as dept_name_it_finish',
+                'j.nama_position as position_it_finish',
+                'c.nama_lengkap as nama_it',
 
-            'd.nama_software'
-        )
-        ->where('a.id', $request->id)
-        ->where('a.jenis_ticket', 'software')
-        ->firstOrFail();
+                'd.nama_software'
+            )
+            ->where('a.id', $request->id)
+            ->where('a.jenis_ticket', 'software')
+            ->firstOrFail();
 
-                
-        // =====================================================
-        // HELPER AMBIL DETAIL USER
-        // =====================================================
-        $getUserDetail = function ($username) {
-            if (empty($username)) {return null;}
-            return DB::table('users as u')
-                ->leftJoin('plants as p', 'p.id_plant', '=', 'u.plant_id')
-                ->leftJoin('departemens as d', 'd.id_departemen', '=', 'u.departemen_id')
-                ->leftJoin('positions as pos', 'pos.id_position', '=', 'u.position_id')
-                ->select(
-                    'u.nama_lengkap',
-                    'p.label as nama_plant',
-                    'd.nama_departemen',
-                    'pos.nama_position'
-                )
-                ->where('u.username', $username)
-                ->first();
-        };
 
         // ===================== PEMOHON ========================
         $hirarkiPemohon = DB::table('user_hirarkis')
@@ -1091,32 +1072,41 @@ class TicketingController extends Controller
             ->where('departemen_id', $data->dept_id_user_create)
             ->where(function ($q) use ($data) {
                 $q->orWhereJsonContains('level1', $data->user_create)
-                ->orWhere('level2', $data->user_create)
-                ->orWhere('level3', $data->user_create);
+                    ->orWhere('level2', $data->user_create)
+                    ->orWhere('level3', $data->user_create);
             })
             ->first();
 
         $pemohon = [
-            'level2' => $getUserDetail($hirarkiPemohon->level2 ?? null),
-            'level3' => $getUserDetail($hirarkiPemohon->level3 ?? null),
-            'level4' => $getUserDetail($hirarkiPemohon->level4 ?? null),
+            'level2' => User::getDetailByUsername($hirarkiPemohon->level2 ?? null), //getdetailbyusername isinya ada namalengkap, nama departemen dan lain lain
+            'level3' => User::getDetailByUsername($hirarkiPemohon->level3 ?? null),
+            'level4' => User::getDetailByUsername($hirarkiPemohon->level4 ?? null),
         ];
+
 
         // ================= LOGIKA FINAL PEMOHON =================
         $finalPemohon = [
             'diperiksa' => null,
             'diketahui' => null,
+            'diperiksa_level' => null,
+            'diketahui_level' => null,
         ];
 
-        if (empty($hirarkiPemohon->level2)) {// CASE 1: level2 TIDAK ADA
+        if (empty($hirarkiPemohon->level2)) {
             $finalPemohon['diperiksa'] = $pemohon['level3'];
             $finalPemohon['diketahui'] = $pemohon['level4'];
-        } elseif (empty($hirarkiPemohon->level3)) {// CASE 2: level2 ADA, level3 TIDAK ADA
+            $finalPemohon['diperiksa_level'] = 'level3';
+            $finalPemohon['diketahui_level'] = 'level4';
+        } elseif (empty($hirarkiPemohon->level3)) {
             $finalPemohon['diperiksa'] = $pemohon['level2'];
             $finalPemohon['diketahui'] = $pemohon['level4'];
-        } else {// CASE 3: level2 & level3 ADA
+            $finalPemohon['diperiksa_level'] = 'level2';
+            $finalPemohon['diketahui_level'] = 'level4';
+        } else {
             $finalPemohon['diperiksa'] = $pemohon['level2'];
             $finalPemohon['diketahui'] = $pemohon['level3'];
+            $finalPemohon['diperiksa_level'] = 'level2';
+            $finalPemohon['diketahui_level'] = 'level3';
         }
 
         // ======================= IT ============================
@@ -1125,15 +1115,15 @@ class TicketingController extends Controller
             ->where('departemen_id', $data->dept_id_it_finish)
             ->where(function ($q) use ($data) {
                 $q->orWhereJsonContains('level1', $data->it_finish)
-                ->orWhere('level2', $data->it_finish)
-                ->orWhere('level3', $data->it_finish);
+                    ->orWhere('level2', $data->it_finish)
+                    ->orWhere('level3', $data->it_finish);
             })
             ->first();
 
         $it = [
-                'level2' => $getUserDetail($hirarkiIt->level2 ?? null),
-                'level3' => $getUserDetail($hirarkiIt->level3 ?? null),
-            ];
+            'level2' => User::getDetailByUsername($hirarkiIt->level2 ?? null),
+            'level3' => User::getDetailByUsername($hirarkiIt->level3 ?? null),
+        ];
 
         // IT: diperiksa = level2, diketahui = level3
         $finalIt = [
@@ -1145,7 +1135,9 @@ class TicketingController extends Controller
         // ======================= QR ============================
         // =====================================================
         $makeQr = function ($text) {
-            if (!$text) {return null;}
+            if (!$text) {
+                return null;
+            }
             $result = Builder::create()
                 ->writer(new PngWriter())
                 ->data($text)
@@ -1157,56 +1149,75 @@ class TicketingController extends Controller
             return 'data:image/png;base64,' . base64_encode($result->getString());
         };
 
-        // PEMOHON
-        $finalPemohon['diperiksa_qr'] = $finalPemohon['diperiksa']
-            ? $makeQr(
-                "Nama: {$finalPemohon['diperiksa']->nama_lengkap}\n" .
-                "Posisi: {$finalPemohon['diperiksa']->nama_position}\n" .
-                "Dept: {$finalPemohon['diperiksa']->nama_departemen}\n" .
-                "Plant: {$finalPemohon['diperiksa']->nama_plant}"
-            ) : null;
+        // QR DIPERIKSA (PEMOHON)
+        $finalPemohon['diperiksa_qr'] = null;
 
-        $finalPemohon['diketahui_qr'] = $finalPemohon['diketahui']
-            ? $makeQr(
-                "Nama: {$finalPemohon['diketahui']->nama_lengkap}\n" .
-                "Posisi: {$finalPemohon['diketahui']->nama_position}\n" .
-                "Dept: {$finalPemohon['diketahui']->nama_departemen}\n" .
-                "Plant: {$finalPemohon['diketahui']->nama_plant}"
-            ): null;
+        if ($finalPemohon['diperiksa']) {
+            if (
+                ($finalPemohon['diperiksa_level'] === 'level2' && $data->status_level2 == TRUE) ||
+                ($finalPemohon['diperiksa_level'] === 'level3' && $data->status_level3 == TRUE) ||
+                ($finalPemohon['diperiksa_level'] === 'level4' && $data->status_level4 == TRUE)
+            ) {
+                $finalPemohon['diperiksa_qr'] = $makeQr(
+                    "Nama: {$finalPemohon['diperiksa']->nama_lengkap}\n" .
+                    "Posisi: {$finalPemohon['diperiksa']->nama_position}\n" .
+                    "Departemen: {$finalPemohon['diperiksa']->nama_departemen}\n" .
+                    "Plant: {$finalPemohon['diperiksa']->nama_plant}"
+                );
+            }
+        }
+
+
+        // QR DIKETAHUI (PEMOHON)
+        $finalPemohon['diketahui_qr'] = null;
+        if ($finalPemohon['diketahui']) {
+            if (
+                ($finalPemohon['diketahui_level'] === 'level2' && $data->status_level2) ||
+                ($finalPemohon['diketahui_level'] === 'level3' && $data->status_level3) ||
+                ($finalPemohon['diketahui_level'] === 'level4' && $data->status_level4)
+            ) {
+                $finalPemohon['diketahui_qr'] = $makeQr(
+                    "Nama: {$finalPemohon['diketahui']->nama_lengkap}\n" .
+                        "Posisi: {$finalPemohon['diketahui']->nama_position}\n" .
+                        "Dept: {$finalPemohon['diketahui']->nama_departemen}\n" .
+                        "Plant: {$finalPemohon['diketahui']->nama_plant}"
+                );
+            }
+        }
 
 
         // IT
         $finalIt['diperiksa_qr'] = $finalIt['diperiksa']
             ? $makeQr(
                 "Nama: {$finalIt['diperiksa']->nama_lengkap}\n" .
-                "Posisi: {$finalIt['diperiksa']->nama_position}\n" .
-                "Dept: {$finalIt['diperiksa']->nama_departemen}\n" .
-                "Plant: {$finalIt['diperiksa']->nama_plant}"
-            ): null;
+                    "Posisi: {$finalIt['diperiksa']->nama_position}\n" .
+                    "Dept: {$finalIt['diperiksa']->nama_departemen}\n" .
+                    "Plant: {$finalIt['diperiksa']->nama_plant}"
+            ) : null;
 
         $finalIt['diketahui_qr'] = $finalIt['diketahui']
             ? $makeQr(
                 "Nama: {$finalIt['diketahui']->nama_lengkap}\n" .
-                "Posisi: {$finalIt['diketahui']->nama_position}\n" .
-                "Dept: {$finalIt['diketahui']->nama_departemen}\n" .
-                "Plant: {$finalIt['diketahui']->nama_plant}"
-            ): null;
+                    "Posisi: {$finalIt['diketahui']->nama_position}\n" .
+                    "Dept: {$finalIt['diketahui']->nama_departemen}\n" .
+                    "Plant: {$finalIt['diketahui']->nama_plant}"
+            ) : null;
 
 
         // PEMOHON CREATE (REQUESTER)
         $qrPemohon = $makeQr(
             "Nama: {$data->nama_pemohon}\n" .
-            "Posisi: {$data->position_user_create}\n" .
-            "Dept: {$data->dept_name_user_create}\n" .
-            "Plant: {$data->plant_name_user_create}"
+                "Posisi: {$data->position_user_create}\n" .
+                "Dept: {$data->dept_name_user_create}\n" .
+                "Plant: {$data->plant_name_user_create}"
         );
 
         // IT FINISH
         $qrItFinish = $makeQr(
             "Nama: {$data->nama_it}\n" .
-            "Posisi: {$data->position_it_finish}\n" .
-            "Dept: {$data->dept_name_it_finish}\n" .
-            "Plant: {$data->plant_name_it_finish}"
+                "Posisi: {$data->position_it_finish}\n" .
+                "Dept: {$data->dept_name_it_finish}\n" .
+                "Plant: {$data->plant_name_it_finish}"
         );
 
 
@@ -1237,5 +1248,4 @@ class TicketingController extends Controller
             ['Content-Type' => 'application/pdf']
         );
     }
-
 }

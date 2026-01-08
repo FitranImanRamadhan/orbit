@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Models\User;
 use App\Models\Chat;
 use App\Models\Ticketing;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use App\Helpers\NotificationHelper;
 use Illuminate\Support\Facades\Auth;
 
 class ChatController extends Controller
 {
     private function canAccess($ticketNo)
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
         // Ambil data tiket
         $ticket = Ticketing::where('ticket_no', $ticketNo)->first();
@@ -25,12 +27,11 @@ class ChatController extends Controller
         if ($ticket->user_create == $user->username) {
             return true;
         }
-
         // Jika dia approver tiket → boleh
-        if (
-            $ticket->approver_level2 == $user->username ||
-            $ticket->approver_level3 == $user->username
-        ) {
+        if ($ticket->approver_level2 == $user->username || $ticket->approver_level3 == $user->username) {
+            return true;
+        }
+        if ($user->departemen_id == 3) {
             return true;
         }
 
@@ -39,43 +40,46 @@ class ChatController extends Controller
     }
 
     public function getChats(Request $request)
-{
-    $request->validate([
-        'ticket_no' => 'required|string'
-    ]);
+    {
+        $request->validate([
+            'ticket_no' => 'required|string'
+        ]);
 
-    $ticketNo = $request->ticket_no;
+        $ticketNo = $request->ticket_no;
 
-    // cek akses
-    if (!$this->canAccess($ticketNo)) {
+        // cek akses
+        if (!$this->canAccess($ticketNo)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Tidak punya akses'
+            ], 403);
+        }
+
+        $user = Auth::user();
+
+        $chats = Chat::where('ticket_no', $ticketNo)
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(function ($chat) use ($user) {
+
+                $userDetail = User::getDetailByUsername($chat->sender);
+
+                return [
+                    'id'          => $chat->id,
+                    'sender'      => $chat->sender,
+                    'sender_name' => $userDetail->nama_lengkap ?? '-',
+                    'is_me'       => $chat->sender == $user->username,
+                    'message'     => $chat->message,
+                    'file'        => $chat->file_path ? asset('storage/' . $chat->file_path) : null,
+                    'time'        => $chat->created_at->format('d-m-Y H:i')
+                ];
+            });
+
         return response()->json([
-            'status' => false,
-            'message' => 'Tidak punya akses'
-        ], 403);
+            'status' => true,
+            'data'   => $chats
+        ]);
     }
-
-    $user = auth()->user();
-
-    $chats = Chat::where('ticket_no', $ticketNo)
-        ->orderBy('created_at', 'asc')
-        ->get()
-        ->map(function ($chat) use ($user) {
-
-            return [
-                'id'        => $chat->id,
-                'sender'    => $chat->sender,
-                'is_me'     => $chat->sender == $user->username, //sender sama tidak dengan user yang login
-                'message'   => $chat->message,
-                'file'      => $chat->file_path ? asset('storage/'.$chat->file_path) : null,
-                'time'      => $chat->created_at->format('d-m-Y H:i')
-            ];
-        });
-
-    return response()->json([
-        'status' => true,
-        'data'   => $chats
-    ]);
-}
 
 
     public function kirim(Request $request)
@@ -96,7 +100,7 @@ class ChatController extends Controller
             ], 403);
         }
 
-        $user = auth()->user();
+        $user = Auth::user();
 
         // Tentukan penerima → khusus approval kirim ke user_create
         $ticket = Ticketing::where('ticket_no', $ticketNo)->first();
@@ -106,28 +110,25 @@ class ChatController extends Controller
                 'message' => 'Ticket tidak ditemukan'
             ], 404);
         }
-        
+
         $receiver = null;
         // Jika pengirim adalah user_create → cari approver aktif
         if ($user->username == $ticket->user_create) {
 
-            if ($ticket->status_level2 === null && $ticket->approver_level2) {
+            if ($ticket->approver_level2 && $ticket->status_level2 === null) {
                 $receiver = $ticket->approver_level2;
-            } 
-            elseif ($ticket->status_level3 === null && $ticket->approver_level3) {
+            } elseif ($ticket->approver_level3 && $ticket->status_level3 === null) {
                 $receiver = $ticket->approver_level3;
-            } 
-            elseif ($ticket->status_level4 === null && $ticket->approver_level4) {
+            } elseif ($ticket->approver_level4 && $ticket->status_level4 === null) {
                 $receiver = $ticket->approver_level4;
             }
-
         } else {
             // Jika pengirim adalah approver → selalu kirim ke user_create
             $receiver = $ticket->user_create;
         }
 
         // Jika tetap null → STOP
-        if(!$receiver){
+        if (!$receiver) {
             return response()->json([
                 'status' => false,
                 'message' => 'Penerima chat tidak ditemukan'
@@ -150,7 +151,7 @@ class ChatController extends Controller
         NotificationHelper::send(
             $ticketNo,
             $receiver,        // username tujuan
-            $ticket->plant_id,
+            $user->plant_id,
             "Ada pesan baru di tiket $ticketNo"
         );
 
@@ -160,8 +161,4 @@ class ChatController extends Controller
             'message' => 'Pesan terkirim'
         ]);
     }
-
-
-
-
 }

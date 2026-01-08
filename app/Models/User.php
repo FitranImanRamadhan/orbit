@@ -32,4 +32,25 @@ class User extends Authenticatable
     {
         return $date->format('Y-m-d H:i:s');
     }
+
+    public static function getDetailByUsername($username)
+    {
+        if (empty($username)) {
+            return null;
+        }
+
+        return DB::table('users as u')
+            ->leftJoin('plants as p', 'p.id_plant', '=', 'u.plant_id')
+            ->leftJoin('departemens as d', 'd.id_departemen', '=', 'u.departemen_id')
+            ->leftJoin('positions as pos', 'pos.id_position', '=', 'u.position_id')
+            ->select(
+                'u.nama_lengkap',
+                'p.label as nama_plant',
+                'd.nama_departemen',
+                'pos.nama_position'
+            )
+            ->where('u.username', $username)
+            ->first();
+    }
+
 }

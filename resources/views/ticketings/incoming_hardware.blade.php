@@ -109,15 +109,7 @@
         <hr>
 
         <!-- Chat Section -->
-        <div class="mt-2">
-          <label class="form-label fw-semibold">Add Comment Below</label>
-          <div class="border rounded-3 p-2 bg-light" id="chat_container" style="height:200px; overflow-y:auto;"></div>
-          <div class="input-group mt-2">
-            <input type="text" class="form-control" id="chat_input" placeholder="Tulis pesan...">
-            <input type="file" class="form-control" id="chat_file" style="max-width:120px;">
-            <button class="btn btn-primary" id="btnSendChat"><i class="fa fa-paper-plane"></i></button>
-          </div>
-        </div>
+        @include('components.chat')
 
       </div>
     </div>
@@ -231,12 +223,11 @@
               `);
           });
 
-          if(rowData.status_approval !== 'approved'){
-              Swal.fire('Warning','Ticket belum full approve, belum bisa dikerjakan!', 'warning');
-          } else {
-              $('#detailTicketModal').modal('show'); // Bootstrap 4
-            
-          }
+          // if(rowData.status_approval !== 'approved'){
+          //     Swal.fire('Warning','Ticket belum full approve, belum bisa dikerjakan!', 'warning');
+          // } else {
+              $('#detailTicketModal').modal('show'); // Bootstrap 4  
+          // }
 
           // ====== STATUS HANDLING ======
           if (rowData.status_problem === 'on_progress') {

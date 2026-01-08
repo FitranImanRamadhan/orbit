@@ -156,7 +156,7 @@ Route::middleware('auth')->group(function () {
         });
 
         //incoming hw
-        Route::middleware(['auth', 'akses:developer,isTS'])->group(function () {
+        Route::middleware(['auth', 'akses:developer,isAdminIt,isTS'])->group(function () {
             Route::get('/incoming_hardware', [TicketingController::class, 'incoming_hardware'])->name('ticketing.incoming_hardware');
             Route::post('/data_incoming_hardware', [TicketingController::class, 'data_incoming_hardware'])->name('ticketing.data_incoming_hardware');
             Route::post('/hw_start_proses', [TicketingController::class, 'hw_start_proses'])->name('ticketing.hw_start_proses');
@@ -164,7 +164,7 @@ Route::middleware('auth')->group(function () {
         });
 
         //incoming sw
-        Route::middleware(['auth', 'akses:developer,isImplementator'])->group(function () {
+        Route::middleware(['auth', 'akses:developer,isAdminIt,isImplementator'])->group(function () {
             Route::get('/incoming_software', [TicketingController::class, 'incoming_software'])->name('ticketing.incoming_software');
             Route::post('/data_incoming_software', [TicketingController::class, 'data_incoming_software'])->name('ticketing.data_incoming_software');
             Route::post('/sw_start_proses', [TicketingController::class, 'sw_start_proses'])->name('ticketing.sw_start_proses');
@@ -173,7 +173,7 @@ Route::middleware('auth')->group(function () {
         });
 
         //report sw
-        Route::middleware(['auth', 'akses:developer,isLeaderImp,isImplementator,isAsmenIt'])->group(function () {
+        Route::middleware(['auth', 'akses:developer,isLeaderImp,isAdminIt,isImplementator,isAsmenIt'])->group(function () {
             Route::get('/report/report_ticket_software', [ReportController::class, 'report_ticket_software'])->name('ticketing.report_ticket_software');
             Route::post('/data_report_software', [TicketingController::class, 'data_report_software'])->name('ticketing.data_report_software');
             Route::post('/report/data_report_ticket_software', [ReportController::class, 'data_report_ticket_software'])->name('ticketing.data_report_ticket_software');
@@ -185,7 +185,7 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/report/create_report_ticket', [ReportController::class, 'create_report_ticket'])->name('ticketing.create_report_ticket');
         //report hw
-        Route::middleware(['auth', 'akses:developer,isLeaderImp,isTS,isAsmenIt'])->group(function () {
+        Route::middleware(['auth', 'akses:developer,isLeaderImp,isAdminIt,isTS,isAsmenIt'])->group(function () {
             Route::get('/report/report_ticket_hardware', [ReportController::class, 'report_ticket_hardware'])->name('ticketing.report_ticket_hardware');
             Route::post('/report/data_report_ticket_hardware', [ReportController::class, 'data_report_ticket_hardware'])->name('ticketing.data_report_ticket_hardware');
             Route::get('/report/chart_ticket_hardware', function () {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Notification;
@@ -43,6 +44,8 @@ class NotificationController extends Controller
         $invalidIds = [];
 
         foreach ($notifications as $notif) {
+            $userDetail = User::getDetailByUsername($notif->username);
+            $notif->nama_lengkap = $userDetail->nama_lengkap ?? '-';
 
             // ✅ JIKA REPORT TICKET → LANGSUNG VALID
             if (str_starts_with($notif->ticket_no, 'RPT/')) {

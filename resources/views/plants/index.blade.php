@@ -43,7 +43,7 @@
         <div class="mb-3">
           <label class="form-label fw-semibold text-secondary">Label</label>
           <input type="text" class="form-control shadow-sm" id="label"
-                 placeholder="Masukkan label plant (opsional)">
+                 placeholder="(Isi singkatan nama plant, contoh: BRI, BEI)">
         </div>
 
       </div>
@@ -183,6 +183,10 @@ function btnSimpan() {
     if (nama === '') {
         setErrorFocus('#nama_plant');
         return Swal.fire('Peringatan', 'Nama plant tidak boleh kosong', 'warning');
+    }
+    if (label === '') {
+        setErrorFocus('#label');
+        return Swal.fire('Peringatan', 'Label plant tidak boleh kosong', 'warning');
     }
 
     let url = (mode === 'tambah') ? '/plants/create' : '/plants/update/' + id;

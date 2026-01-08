@@ -13,8 +13,7 @@ return new class extends Migration
 
             $table->string('ticket_no', 50);
             $table->string('sender', 50);
-            $table->string('receiver', 50)->nullable();
-
+            $table->text('receiver')->nullable();
             $table->text('message')->nullable();
             $table->string('file_path')->nullable();
 

@@ -9,7 +9,7 @@
     $isDev              = ($isIT && $user->user_akses === 'developer');
     $isSuperAdmin       = ($isIT && $user->user_akses === 'super_admin');
     $isImplementator    = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [37, 1006]));
-    $isTS               = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [34, 32, 1007]));
+    $isTS               = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [32, 1007]));
     $isLeaderImp        = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1006]));
     $isLeaderTs         = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1007]));
     $isAdminIt          = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [34]));
@@ -119,10 +119,10 @@
                         <i class="fa fa-inbox icon"></i><span class="text nav-text">Incoming Ticket</span>
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="incomingDropdown">
-                        @if($isDev || $isLeaderImp || $isImplementator)
+                        @if($isDev || $isLeaderImp || $isAdminIt || $isImplementator )
                             <li><a class="dropdown-item {{ request()->routeIs('ticketing.incoming_software') ? 'active' : '' }}" href="{{ route('ticketing.incoming_software') }}">Software</a></li>
                         @endif
-                        @if($isDev || $isLeaderTs || $isTS)
+                        @if($isDev || $isLeaderTs || $isAdminIt || $isTS)
                             <li><a class="dropdown-item {{ request()->routeIs('ticketing.incoming_hardware') ? 'active' : '' }}" href="{{ route('ticketing.incoming_hardware') }}">Hardware</a></li>
                         @endif
                     </ul>
@@ -135,10 +135,10 @@
                         <i class="fa fa-chart-bar icon"></i><span class="text nav-text">Report</span>
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="reportDropdown">
-                        @if($isDev || $isAsmenIt || $isLeaderImp || $isImplementator)
+                        @if($isDev || $isAsmenIt || $isLeaderImp || $isAdminIt || $isImplementator)
                         <li><a class="dropdown-item" href="{{ route('ticketing.report_ticket_software') }}">Software</a></li>
                         @endif
-                        @if($isDev || $isAsmenIt || $isLeaderTs || $isTS)
+                        @if($isDev || $isAsmenIt || $isLeaderTs || $isAdminIt || $isTS)
                         <li><a class="dropdown-item" href="{{ route('ticketing.report_ticket_hardware') }}">Hardware</a></li>
                         @endif
                     </ul>

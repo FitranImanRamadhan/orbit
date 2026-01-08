@@ -114,15 +114,8 @@
                         <span id="finish_time" class="fw-semibold text-secondary"></span>
                     </div>
                     <hr>
-                    <div class="mt-2"><label class="form-label fw-semibold">Add Comment Below</label>
-                        <div class="border rounded-3 p-2 bg-light" id="chat_container"
-                            style="height:200px; overflow-y:auto;"></div>
-                        <div class="input-group mt-2">
-                            <input type="text" class="form-control" id="chat_input" placeholder="Tulis pesan...">
-                            <input type="file" class="form-control" id="chat_file" style="max-width:120px;">
-                            <button class="btn btn-primary" id="btnSendChat"><i class="fa fa-paper-plane"></i></button>
-                        </div>
-                    </div>
+                    <!-- Chat Section -->
+                    @include('components.chat')
                 </div>
             </div>
         </div>
@@ -298,7 +291,7 @@
                 } else if (rowData.status_problem === 'closed') {
                     $('#btnStart').addClass('disabled');
                     $('#btnFinish').addClass('disabled');
-                    setFormDisabled(true);
+                    // setFormDisabled(true);
                     if (rowData.time_finish) $('#finish_time').text(rowData.time_finish);
                     if (rowData.time_start) $('#start_time').text(rowData.time_start);
                 } else { // OPEN
@@ -326,8 +319,8 @@
             $('#tabel').on('click', '.btn-preview', function () {
                 currentPdfId = $(this).data('id');
                 let rowData = table.row($(this).closest('tr')).data();
-                if (!currentPdfId) return  Swal.fire('Info', 'ID Tidak Ditemukan', 'info');
-                if (rowData.status_problem !== 'closed') return  Swal.fire('Info', 'Ticket Belum selesai dikerjakan', 'info');
+                if (!currentPdfId) return  Swal.fire('Warning', 'ID Tidak Ditemukan', 'warning');
+                if (rowData.status_problem !== 'closed') return  Swal.fire('Warning', 'Ticket Belum selesai dikerjakan', 'warning');
 
                 $('#iframePreviewPdf').attr(
                     'src',
