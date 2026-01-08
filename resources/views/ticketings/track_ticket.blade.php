@@ -206,7 +206,7 @@ $(document).ready(function() {
           });
         $('#detailTicketModal').modal('show');
         const ticketNo = $('#ticketno').val();
-        loadChats(ticketNo);
+        // loadChat();
     });
 });
 

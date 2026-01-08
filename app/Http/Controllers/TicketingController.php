@@ -476,7 +476,7 @@ class TicketingController extends Controller
                         $update_data['remarks2'] = $request->remarks ?? null;
                         $update_data['date_level2'] = $waktu_sekarang;
                         $update_data['status_approval'] = $request->status == 'approved' ? 'waiting' : 'rejected';
-                        $update_data['status_problem'] = $request->status == 'approved' ? null : 'canceled';
+                        $update_data['status_problem'] = $request->status == 'approved' ? '' : 'canceled';
 
                         $penerima_selanjutnya = $tiket->approver_level3 ?? $tiket->approver_level4 ?? $tiket->user_create;
                         if ($request->status == 'approved') {

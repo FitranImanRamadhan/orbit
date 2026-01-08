@@ -9,25 +9,23 @@ class Chat extends Model
 {
     use HasFactory;
 
-    protected $table = 'tbl_chats'; // Nama tabel
+    protected $table = 'chats';
+    protected $primaryKey = 'id';
+    public $incrementing = true;
 
     protected $fillable = [
-        'no_ticket',
-        'pengirim_username',
-        'penerima_username',
-        'pesan',
-        'status_dibaca',
-        'status_dikirim',
+        'ticket_no',
+        'sender',
+        'receiver',
+        'message',
+        'file_path',
+        'is_read'
     ];
 
     protected $casts = [
-        'status_dibaca' => 'boolean',
-        'status_dikirim' => 'boolean',
+        'is_read' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
-
-    protected function serializeDate(\DateTimeInterface $date)
-    {
-        return $date->format('Y-m-d H:i:s');
-    }
 
 }

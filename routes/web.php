@@ -14,6 +14,7 @@ use App\Http\Controllers\TicketingController;
 use App\Http\Controllers\UserHirarkiController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ChatController;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Plant;
 
@@ -206,4 +207,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/data_user_confirm_hardware', [TicketingController::class, 'data_user_confirm_hardware'])->name('ticketing.data_user_confirm_hardware');
         Route::post('/proses_user_confirm_hardware', [TicketingController::class, 'proses_user_confirm_hardware'])->name('ticketing.proses_user_confirm_hardware');
     });
+
+    Route::post('/chat/send', [ChatController::class, 'send']);
+    Route::post('/chat/kirim', [ChatController::class, 'kirim']);
+    Route::post('/chat/getChats', [ChatController::class, 'getChats']);
+    Route::post('/chat/read', [ChatController::class, 'read']);
 });

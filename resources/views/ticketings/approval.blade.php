@@ -90,14 +90,7 @@
           <a href="javascript:void(0)" id="btnApproved" class="btn btn-success" onclick="btnApproved()"><i class="fa fa-check me-1"></i> Approved</a>
         </div>
         <hr>
-        <div class="mt-2"><label class="form-label fw-semibold">Add Comment Below</label>
-          <div class="border rounded-3 p-2 bg-light" id="chat_container" style="height:200px; overflow-y:auto;"></div>
-          <div class="input-group mt-2">
-            <input type="text" class="form-control" id="chat_input" placeholder="Tulis pesan...">
-            <input type="file" class="form-control" id="chat_file" style="max-width:120px;">
-            <button class="btn btn-primary" id="btnSendChat"><i class="fa fa-paper-plane"></i></button>
-          </div>
-        </div>
+        @include('components.chat')
       </div>
     </div>
   </div>
