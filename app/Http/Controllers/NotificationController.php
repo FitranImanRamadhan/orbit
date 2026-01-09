@@ -39,7 +39,7 @@ class NotificationController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(20)
             ->get();
-
+        
         $validNotifications = [];
         $invalidIds = [];
 
@@ -93,7 +93,6 @@ class NotificationController extends Controller
 
         $ticket = Ticketing::where('ticket_no', $ticketNo)->first();
         if (!$ticket) {return response()->json(['redirect' => false]);}
-
         if ($ticket->approver_depthead == $user->username || $ticket->approver_level4 == $user->username ||
             $ticket->approver_level3 == $user->username || $ticket->approver_level2 == $user->username) {
             return response()->json(['redirect' => true, 'url' => route('ticketing.approval')]);

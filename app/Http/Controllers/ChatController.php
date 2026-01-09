@@ -111,29 +111,60 @@ class ChatController extends Controller
             ], 404);
         }
 
-        $receiver = null;
-        // Jika pengirim adalah user_create → cari approver aktif
-        if ($user->username == $ticket->user_create) {
+        // JIKA APPROVAL SUDAH FINAL
+        $receiver = [];
 
-            if ($ticket->approver_level2 && $ticket->status_level2 === null) {
-                $receiver = $ticket->approver_level2;
-            } elseif ($ticket->approver_level3 && $ticket->status_level3 === null) {
-                $receiver = $ticket->approver_level3;
-            } elseif ($ticket->approver_level4 && $ticket->status_level4 === null) {
-                $receiver = $ticket->approver_level4;
+        // ==========================
+        // JIKA APPROVAL SUDAH FINAL
+        // ==========================
+        if ($ticket->status_approval === 'approved') {
+
+            // user_create → IT (banyak)
+            if ($user->username === $ticket->user_create) {
+
+                $receiver = User::where('departemen_id', 3)
+                    ->pluck('username')
+                    ->toArray();
             }
-        } else {
-            // Jika pengirim adalah approver → selalu kirim ke user_create
-            $receiver = $ticket->user_create;
+            // IT → user_create (1 orang)
+            elseif ($user->departemen_id == 3) {
+
+                $receiver = [$ticket->user_create];
+            }
         }
 
-        // Jika tetap null → STOP
-        if (!$receiver) {
+        // ==========================
+        // JIKA MASIH PROSES APPROVAL
+        // ==========================
+        elseif ($ticket->status_approval === 'waiting') {
+
+            // user_create → approver aktif
+            if ($user->username === $ticket->user_create) {
+
+                if ($ticket->approver_level2 && $ticket->status_level2 === null) {
+                    $receiver = [$ticket->approver_level2];
+                } elseif ($ticket->approver_level3 && $ticket->status_level3 === null) {
+                    $receiver = [$ticket->approver_level3];
+                } elseif ($ticket->approver_level4 && $ticket->status_level4 === null) {
+                    $receiver = [$ticket->approver_level4];
+                }
+            }
+            // approver → user_create
+            else {
+                $receiver = [$ticket->user_create];
+            }
+        }
+
+        // ==========================
+        // SAFETY CHECK
+        // ==========================
+        if (empty($receiver)) {
             return response()->json([
                 'status' => false,
-                'message' => 'Penerima chat tidak ditemukan'
+                'message' => 'Chat tidak tersedia untuk status tiket ini'
             ], 422);
         }
+
 
         $filePath = null;
         if ($request->hasFile('file')) {
@@ -143,17 +174,31 @@ class ChatController extends Controller
         Chat::create([
             'ticket_no' => $ticketNo,
             'sender'    => $user->username,
-            'receiver'  => $receiver,
+            'receiver'  => json_encode($receiver),
             'message'   => $request->message,
             'file_path' => $filePath,
             'is_read'   => false
         ]);
+
+        //foreach notifikasi karena receiver lebih dari 1 jadi harus di foreach
+        $receiverUsers = User::whereIn('username', $receiver)
+        ->get()
+        ->keyBy('username');
+
+    foreach ($receiver as $username) {
+
+        if (!isset($receiverUsers[$username])) {
+            continue;
+        }
+
         NotificationHelper::send(
             $ticketNo,
-            $receiver,        // username tujuan
-            $user->plant_id,
+            $username,
+            $receiverUsers[$username]->plant_id,
             "Ada pesan baru di tiket $ticketNo"
         );
+    }
+
 
 
         return response()->json([

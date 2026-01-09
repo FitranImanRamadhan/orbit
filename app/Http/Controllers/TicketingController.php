@@ -369,9 +369,19 @@ class TicketingController extends Controller
 
             // APPROVAL FLOW manual
             $approvalFlow = [];
-            if (!empty($ticket->approver_level2)) $approvalFlow[2] = ['username' => $ticket->approver_level2, 'status' => $ticket->status_level2];
-            if (!empty($ticket->approver_level3)) $approvalFlow[3] = ['username' => $ticket->approver_level3, 'status' => $ticket->status_level3];
-            if (!empty($ticket->approver_level4)) $approvalFlow[4] = ['username' => $ticket->approver_level4, 'status' => $ticket->status_level4];
+            if (!empty($ticket->approver_level2)) {
+                $user2 = User::getDetailByUsername($ticket->approver_level2);
+                $approvalFlow[2] = ['username' => $ticket->approver_level2, 'status' => $ticket->status_level2, 'nama_lengkap' => $user2->nama_lengkap ?? $ticket->approver_level2];
+            }
+            if (!empty($ticket->approver_level3)) {
+                $user3 = User::getDetailByUsername($ticket->approver_level3);
+                $approvalFlow[3] = ['username' => $ticket->approver_level3,'status' => $ticket->status_level3,'nama_lengkap' => $user3->nama_lengkap ?? $ticket->approver_level3
+                ];
+            }
+            if (!empty($ticket->approver_level4)) {
+                $user4 = User::getDetailByUsername($ticket->approver_level4);
+                $approvalFlow[4] = ['username' => $ticket->approver_level4, 'status' => $ticket->status_level4, 'nama_lengkap' => $user4->nama_lengkap ?? $ticket->approver_level4];
+            }
 
             if ($ticket->jenis_ticket == 'software') {
 
@@ -412,6 +422,7 @@ class TicketingController extends Controller
 
             if ($show_ticket) {
                 $ticket->need_approve = $need_approve;
+                $ticket->approvalFlow = $approvalFlow;
                 $filtered[] = $ticket;
             }
         }
@@ -590,9 +601,6 @@ class TicketingController extends Controller
                 // Update database
                 DB::table('tbl_tickets')->where('ticket_no', $tiket->ticket_no)->update($update_data);
             }
-
-
-
             // Log aktivitas
             ActivityLogger::log($request->status == 'approved' ? 'approve' : 'reject', 'Tiket', 'Primary: ' . $tiket->ticket_no);
 
@@ -719,7 +727,6 @@ class TicketingController extends Controller
                 'd.nama_software as nama_software',
                 'f.nama_plant as nama_plant'
             );
-
         if ($request->start_date && $request->end_date) $query->whereBetween('tgl_permintaan', [$request->start_date, $request->end_date]);
         if ($request->jenis_ticket) $query->where('jenis_ticket', $request->jenis_ticket);
         if ($request->status_problem) $query->where('status_problem', $request->status_problem);
@@ -728,6 +735,23 @@ class TicketingController extends Controller
         $ticketings = $query->orderByRaw("CASE WHEN a.status_problem = 'open' THEN 0 ELSE 1 END")
             ->orderBy('tgl_permintaan', 'desc')
             ->get();
+
+        //foreach hanya untuk mengmbail detial nama lengkap saja
+        foreach ($ticketings as $ticket) {
+            if (!empty($ticket->approver_level2)) {
+                $user2 = User::getDetailByUsername($ticket->approver_level2);
+                $ticket->nama_lengkap2 = $user2->nama_lengkap ?? $ticket->approver_level2;
+            }
+            if (!empty($ticket->approver_level3)) {
+                $user3 = User::getDetailByUsername($ticket->approver_level3);
+                $ticket->nama_lengkap3 = $user3->nama_lengkap ?? $ticket->approver_level3;
+            }
+            if (!empty($ticket->approver_level4)) {
+                $user4 = User::getDetailByUsername($ticket->approver_level4);
+                $ticket->nama_lengkap4 = $user4->nama_lengkap ?? $ticket->approver_level4;
+            }
+        }
+
         if ($ticketings->isEmpty()) {
             return response()->json([
                 'success' => false,

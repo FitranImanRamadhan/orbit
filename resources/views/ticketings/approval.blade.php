@@ -85,6 +85,22 @@
           </div>
         </div>
         <div class="mt-2"><label class="form-label fw-semibold">Remarks</label><textarea class="form-control" id="remarks" placeholder="Tulis remarks di sini..." style="height:50px; max-width:300px; resize:none;"></textarea></div>
+        <div class="mt-1" id="containerRemarks">
+          <div class="d-flex text-muted mb-1" style="font-size:12px;" id="rowRemark2">
+              <strong id="nama_remark2" class="me-1"></strong>
+              <span id="remark2"></span>
+          </div>
+
+          <div class="d-flex text-muted mb-1" style="font-size:12px;" id="rowRemark3">
+              <strong id="nama_remark3" class="me-1"></strong>
+              <span id="remark3"></span>
+          </div>
+
+          <div class="d-flex text-muted mb-1" style="font-size:12px;" id="rowRemark4">
+              <strong id="nama_remark4" class="me-1"></strong>
+              <span id="remark4"></span>
+          </div>
+      </div>
         <div class="d-flex justify-content-end my-2">
           <a href="javascript:void(0)" id="btnNotApproved" class="btn btn-outline-danger me-2" onclick="btnNotApproved()"><i class="fa fa-times me-1"></i> Not Approved</a>
           <a href="javascript:void(0)" id="btnApproved" class="btn btn-success" onclick="btnApproved()"><i class="fa fa-check me-1"></i> Approved</a>
@@ -182,13 +198,43 @@ $(document).ready(function() {
 
     $('#tabel tbody').on('dblclick', 'tr', function() {
         let rowData = table.row(this).data(); 
-        if (!rowData) return;
-      
+        if (!rowData) return;    
         $('#lbl_ticketno').text(rowData.ticket_no);
         $('#ticketno').val(rowData.ticket_no);
         $('#deskripsi').val(rowData.deskripsi ?? '');
         $('#nama').val(rowData.nama_lengkap ?? '');
         $('#departemen').val(rowData.nama_departemen ?? '');
+        //remark
+        $('#containerRemarks').hide();
+        $('#rowRemark2, #rowRemark3, #rowRemark4').hide();
+        $('#remark2, #remark3, #remark4').text('');
+        $('#nama_remark2, #nama_remark3, #nama_remark4').text('');
+        if (currentUser === rowData.approver_level3) {
+            if (rowData.remarks2) {
+                $('#nama_remark2').text(rowData.approvalFlow[2].nama_lengkap);
+                $('#remark2').text(' : ' +rowData.remarks2);
+                $('#rowRemark2').show();
+                $('#containerRemarks').show();
+            }
+        }
+        if (currentUser === rowData.approver_level4) {
+            let showAny = false;
+            if (rowData.remarks2) {
+                $('#nama_remark2').text(rowData.approvalFlow[2].nama_lengkap);
+                $('#remark2').text(' : ' + rowData.remarks2);
+                $('#rowRemark2').show();
+                showAny = true;
+            }
+            if (rowData.remarks3) {
+                $('#nama_remark3').text(rowData.approvalFlow[3].nama_lengkap);
+                $('#remark3').text(' : ' +rowData.remarks3);
+                $('#rowRemark3').show();
+                showAny = true;
+            }
+            if (showAny) {
+                $('#containerRemarks').show();
+            }
+        }
 
         let jenis_ticket = rowData.jenis_ticket;
         if (jenis_ticket == 'software') {
@@ -265,13 +311,18 @@ $(document).ready(function() {
         }
 
         $('#detailTicketModal').modal('show');
+        
     });
 
     $('#detailTicketModal').on('hidden.bs.modal', function () {
     // Reset semua input / textarea / select
-    $('#remarks').val('');
-   
-});
+        $('#remarks').val('');
+        $('#containerRemarks').hide();
+        $('#rowRemark2, #rowRemark3, #rowRemark4').hide();
+        $('#remark2, #remark3, #remark4').text('');
+        $('#nama_remark2, #nama_remark3, #nama_remark4').text('');
+      
+    });
 
 });
 

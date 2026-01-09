@@ -10,8 +10,9 @@ return new class extends Migration
        Schema::create('notifications', function (Blueprint $table) {
             $table->id();
             $table->string('ticket_no');
+            $table->string('type', 60)->nullable();
             $table->string('username'); 
-            $table->unsignedBigInteger('plant_id'); // penting untuk membedakan user
+            $table->unsignedBigInteger('plant_id')->nullable(); // penting untuk membedakan user
             $table->text('message');
             $table->enum('status', ['unread', 'read'])->default('unread');
             $table->timestamps();

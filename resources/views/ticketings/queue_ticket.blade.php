@@ -76,10 +76,10 @@ $(document).ready(function() {
         scrollX: true,
         scrollCollapse: true,
         columns: [
-            { data: 'ticket_no', width: "80px"}, 
+            { data: 'ticket_no', width: "185px"}, 
             { data: 'nama_lengkap', width: "170px" },
             { data: 'nama_departemen', className: 'text-start'},
-            { data: 'tgl_permintaan', width: "130px"}, 
+            { data: 'tgl_permintaan', className: 'text-start', width: "150px"}, 
             { data: 'jenis_ticket',
                 render: function(data) {
                     switch (data) {
@@ -96,7 +96,7 @@ $(document).ready(function() {
                         case 'waiting': badge = '<span class="badge bg-warning text-dark">Waiting</span>'; break;
                         case 'approved': badge = '<span class="badge bg-success">Approved</span>'; break;
                         case 'rejected': badge = '<span class="badge bg-danger">Rejected</span>'; break;
-                        default: badge = '<span class="badge bg-secondary">'+ data +'</span>'; break;
+                        default: badge = '<span class="badge bg-secondary">-</span>'; break;
                     }
                     return badge;
                 },
@@ -107,9 +107,9 @@ $(document).ready(function() {
                     let badge = '';
                     switch (data) {
                         case 'open': badge = '<span class="badge bg-danger text-dark">Open</span>'; break;
-                        case 'on_progress': badge = '<span class="badge bg-warning">On_progress</span>'; break;
+                        case 'on_progress': badge = '<span class="badge bg-warning">On Progres</span>'; break;
                         case 'closed': badge = '<span class="badge bg-success">Closed</span>'; break;
-                        default: badge = '<span class="badge bg-secondary">'+ data +'</span>'; break;
+                        default: badge = '<span class="badge bg-secondary">-</span>'; break;
                     }
                     return badge;
                 },

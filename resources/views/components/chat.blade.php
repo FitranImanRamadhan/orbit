@@ -14,9 +14,17 @@
 <script src="{{ asset('assets/vendor/jquery-ui/js/jquery-ui.min.js') }}"></script>
 <script>
     $(document).ready(function() {
+        let chatInterval; // simpan interval
+        $('#detailTicketModal').on('shown.bs.modal', function () {
+            $('#chat_container').empty();
+            loadChat(); // langsung load pertama kali
+            chatInterval = setInterval(loadChat, 3000); // polling tiap 3 detik
+        });
+        $('#detailTicketModal').on('hidden.bs.modal', function () {
+            clearInterval(chatInterval); // hentikan polling saat modal ditutup
+            $('#chat_container').empty();
+        });
 
-        loadChat();
-        setInterval(loadChat, 3000);
     });
 
     function kirimChat() {

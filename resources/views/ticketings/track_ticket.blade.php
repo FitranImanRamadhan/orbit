@@ -136,7 +136,7 @@ $(document).ready(function() {
                         case 'waiting': badge = '<span class="badge bg-warning text-dark">Waiting</span>'; break;
                         case 'approved': badge = '<span class="badge bg-success">Approved</span>'; break;
                         case 'rejected': badge = '<span class="badge bg-danger">Rejected</span>'; break;
-                        default: badge = '<span class="badge bg-secondary">'+ data +'</span>'; break;
+                        default: badge = '<span class="badge bg-secondary">-</span>'; break;
                     }
                     return badge;
                 },
@@ -147,10 +147,10 @@ $(document).ready(function() {
                     let badge = '';
                     switch (data) {
                         case 'open': badge = '<span class="badge bg-danger text-dark">Open</span>'; break;
-                        case 'on_progress': badge = '<span class="badge bg-warning">On_progress</span>'; break;
+                        case 'on_progress': badge = '<span class="badge bg-warning">On Progress</span>'; break;
                         case 'closed': badge = '<span class="badge bg-success">Closed</span>'; break;
                         case 'canceled': badge = '<span class="badge bg-secondary">Closed</span>'; break;
-                        default: badge = '<span class="badge bg-secondary">'+ data +'</span>'; break;
+                        default: badge = '<span class="badge bg-secondary">-</span>'; break;
                     }
                     return badge;
                 },

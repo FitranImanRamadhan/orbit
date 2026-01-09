@@ -188,9 +188,7 @@ Route::middleware('auth')->group(function () {
         Route::middleware(['auth', 'akses:developer,isLeaderImp,isAdminIt,isTS,isAsmenIt'])->group(function () {
             Route::get('/report/report_ticket_hardware', [ReportController::class, 'report_ticket_hardware'])->name('ticketing.report_ticket_hardware');
             Route::post('/report/data_report_ticket_hardware', [ReportController::class, 'data_report_ticket_hardware'])->name('ticketing.data_report_ticket_hardware');
-            Route::get('/report/chart_ticket_hardware', function () {
-                return view('ticketings.report.chart_ticket_hardware');
-            });
+            Route::get('/report/chart_ticket_hardware', function () {return view('ticketings.report.chart_ticket_hardware');});
             Route::post('/report/data_chart_ticket_hardware', [ReportController::class, 'data_chart_ticket_hardware'])->name('ticketing.data_chart_ticket_hardware');
         });
 

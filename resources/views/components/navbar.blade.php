@@ -50,12 +50,18 @@
                         <i class="fa fa-database icon"></i><span class="text nav-text">Master</span>
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="masterDropdown">
+                        @if($isDev || $isSuperAdmin)
                         <li><a class="dropdown-item {{ request()->routeIs('plants.index') ? 'active' : '' }}" href="{{ route('plants.index') }}">Plant</a></li>
                         <li><a class="dropdown-item {{ request()->routeIs('departemens.index') ? 'active' : '' }}" href="{{ route('departemens.index') }}">Departemen</a></li>
                         <li><a class="dropdown-item {{ request()->routeIs('positions.index') ? 'active' : '' }}" href="{{ route('positions.index') }}">Position</a></li>
+                        @endif
+                        @if($isDev || $isAdmin || $isSuperAdmin)
                         <li><a class="dropdown-item {{ request()->routeIs('users.index') ? 'active' : '' }}" href="{{ route('users.index') }}">User</a></li>
+                        @endif
+                        @if($isDev || $isSuperAdmin)
                         <li><a class="dropdown-item {{ request()->routeIs('hardwares.index') ? 'active' : '' }}" href="{{ route('hardwares.index') }}">Hardware</a></li>
                         <li><a class="dropdown-item {{ request()->routeIs('softwares.index') ? 'active' : '' }}" href="{{ route('softwares.index') }}">Software</a></li>
+                        @endif
                     </ul>
                 </li>
                 @endif
@@ -113,7 +119,7 @@
                 </li>
                 @endif
 
-                @if($isDev || $isSuperAdmin)
+                @if($isDev || $isImplementator || $isTS || $isAdminIt)
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center {{ request()->routeIs('ticketing.incoming_software') || request()->routeIs('ticketing.incoming_hardware') ? 'active' : '' }}" href="#" id="incomingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fa fa-inbox icon"></i><span class="text nav-text">Incoming Ticket</span>
