@@ -284,15 +284,14 @@
                     $('#rowRemark4').show();
                     $('#containerRemarks').show();
                 }
-        
-            
-
+    
                 const kategoriMap = {
                     'ui': 'UI',
                     'function': 'Function',
                     'output': 'Output'
                 };
                 $('#fkategori_klaim').val(kategoriMap[rowData.kategori_klaim] ?? rowData.kategori_klaim);
+                
                 const lampiranContainer = $('#lampiran_files');
                 lampiranContainer.empty(); // kosongkan container sebelum menambahkan file baru
 

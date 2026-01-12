@@ -142,11 +142,24 @@
             <td rowspan="3" style="text-align:center;">1</td>
             <td rowspan="3">{{ $data->deskripsi }}</td>
             <td style="text-align:center;">
-                @if ($data->file1)
-                    <img src="file://{{ public_path('storage/' . $data->file1) }}" style="height:12mm;">
+                @if (!empty($data->file1))
+                    @php
+                        $path = public_path($data->file1); // Path fisik untuk mPDF (image)
+                        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION)); // Extension file
+                    @endphp
+                    @if (file_exists($path) && in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) 
+                        <a href="{{ asset($data->file1) }}"> <img src="file://{{ $path }}" style="height:12mm;"></a>
+                    @elseif (file_exists($path)) {{-- DOCUMENT (LINK) --}}
+                        <a href="{{ asset($data->file1) }}" style="display:inline-block; padding:2mm 3mm; border:0.2mm solid #000; font-size:9px; font-weight:bold;text-decoration:none; color:#000;">
+                            {{ strtoupper($ext) }}
+                        </a>
+                    @else
+                        <span style="font-size:9px; color:red;">FILE NOT FOUND</span>
+                    @endif
                 @endif
             </td>
-            <td rowspan="3" style="text-align:center;">{{ $finalPemohon['diperiksa']->nama_lengkap ?? $finalPemohon['diketahui']->nama_lengkap ?? '-'}}</td>
+            <td rowspan="3" style="text-align:center;">
+                {{ $finalPemohon['diperiksa']->nama_lengkap ?? ($finalPemohon['diketahui']->nama_lengkap ?? '-') }}</td>
             <td rowspan="3" style="text-align:center;">{{ $data->nama_it }}</td>
             <td rowspan="3" style="text-align:center;">
                 {{ $data->time_finish ? \Carbon\Carbon::parse($data->time_finish)->format('d-m-Y') : '-' }}</td>
@@ -156,22 +169,46 @@
         {{-- LAMPIRAN 2 --}}
         <tr>
             <td style="text-align:center;">
-                @if ($data->file2)
-                    <img src="file://{{ public_path('storage/' . $data->file2) }}" style="height:12mm;">
+                @if (!empty($data->file2))
+                    @php
+                        $path = public_path($data->file2); // Path fisik untuk mPDF (image)
+                        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION)); // Extension file
+                    @endphp
+                    @if (file_exists($path) && in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) 
+                        <a href="{{ asset($data->file2) }}"> <img src="file://{{ $path }}" style="height:12mm;"></a>
+                    @elseif (file_exists($path)) {{-- DOCUMENT (LINK) --}}
+                        <a href="{{ asset($data->file2) }}" style="display:inline-block; padding:2mm 3mm; border:0.2mm solid #000; font-size:9px; font-weight:bold;text-decoration:none; color:#000;">
+                            {{ strtoupper($ext) }}
+                        </a>
+                    @else
+                        <span style="font-size:9px; color:red;">FILE NOT FOUND</span>
+                    @endif
                 @endif
             </td>
         </tr>
         {{-- LAMPIRAN 3 --}}
         <tr>
             <td style="text-align:center;">
-                @if ($data->file3)
-                    <img src="file://{{ public_path('storage/' . $data->file3) }}" style="height:12mm;">
+                @if (!empty($data->file3))
+                    @php
+                        $path = public_path($data->file3); // Path fisik untuk mPDF (image)
+                        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION)); // Extension file
+                    @endphp
+                    @if (file_exists($path) && in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) 
+                        <a href="{{ asset($data->file3) }}"> <img src="file://{{ $path }}" style="height:12mm;"></a>
+                    @elseif (file_exists($path)) {{-- DOCUMENT (LINK) --}}
+                        <a href="{{ asset($data->file3) }}" style="display:inline-block; padding:2mm 3mm; border:0.2mm solid #000; font-size:9px; font-weight:bold;text-decoration:none; color:#000;">
+                            {{ strtoupper($ext) }}
+                        </a>
+                    @else
+                        <span style="font-size:9px; color:red;">FILE NOT FOUND</span>
+                    @endif
                 @endif
             </td>
         </tr>
 
         {{-- BARIS KOSONG (FIXED TINGGI) --}}
-        @for ($i = 0; $i < 15; $i++)
+        @for ($i = 0; $i < 13; $i++)
             <tr>
                 <td rowspan="3">&nbsp;</td>
                 <td rowspan="3">&nbsp;</td>
@@ -190,7 +227,6 @@
             </tr>
         @endfor
     </table>
-
 
     <!-- ================= FOOTER (TTD) ================= -->
     <htmlpagefooter name="footerTTD">
@@ -233,14 +269,16 @@
                     </td>
                     <td style="border:none;"></td>
                     {{-- PEMOHON --}}
-                    <td style="border:1px solid #000;width:16%;padding:2mm;text-align:center;vertical-align:middle;height:12mm;">
+                    <td
+                        style="border:1px solid #000;width:16%;padding:2mm;text-align:center;vertical-align:middle;height:12mm;">
                         @if ($finalPemohon['diketahui_qr'])
                             <img src="{{ $finalPemohon['diketahui_qr'] }}" style="height:12mm;">
                         @else
                             -
                         @endif
                     </td>
-                    <td style="border:1px solid #000;width:16%;padding:2mm;text-align:center;vertical-align:middle;height:12mm;">
+                    <td
+                        style="border:1px solid #000;width:16%;padding:2mm;text-align:center;vertical-align:middle;height:12mm;">
                         @if ($finalPemohon['diperiksa_qr'])
                             <img src="{{ $finalPemohon['diperiksa_qr'] }}" style="height:12mm;">
                         @else

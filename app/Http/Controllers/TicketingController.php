@@ -829,7 +829,7 @@ class TicketingController extends Controller
         // Kirim notifikasi selesai
         $message = "Ticket ($ticket->ticket_no) telah selesai dikerjakan.";
         NotificationHelper::send($ticket->ticket_no, $ticket->user_create, $ticket->plant_id, $message);
-
+        
         return response()->json(['success' => true, 'message' => 'Ticket telah selesai.']);
     }
 
