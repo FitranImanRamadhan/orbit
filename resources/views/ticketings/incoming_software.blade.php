@@ -130,6 +130,12 @@
                             onclick="btnFinish()"> FINISH </a>
                         <span id="finish_time" class="fw-semibold text-secondary"></span>
                     </div>
+                    <div class="d-flex justify-content-end my-2">
+                        <a href="javascript:void(0)" id="btnNotApproved" class="btn btn-outline-danger me-2"
+                            onclick="btnNotApproved()"><i class="fa fa-times me-1"></i> Not Approved</a>
+                        <a href="javascript:void(0)" id="btnApproved" class="btn btn-success" onclick="btnApproved()"><i
+                                class="fa fa-check me-1"></i> Approved</a>
+                    </div>
                     <hr>
                     <!-- Chat Section -->
                     @include('components.chat')
@@ -174,6 +180,7 @@
 @section('scripts')
     <script>
         let jenis_ticket = 'software';
+        let selectedRowData = null;
         let table;
         $(document).ready(function() {
             jenis_ticket = 'software';
@@ -194,7 +201,7 @@
                 scrollCollapse: true,
                 ordering: false,
                 columns: [
-                    { data: 'ticket_no', width: "120px"},
+                    { data: 'ticket_no', width: "180px"},
                     { data: 'nama_software', width: "150px" },
                     { data: 'nama_departemen', width: "80px" },
                     { data: 'nama_plant', width: "150px"},
@@ -219,7 +226,7 @@
                             let badge = '';
                             switch (data) {
                                 case 'open': badge = '<span class="badge bg-danger text-dark">Open</span>'; break;
-                                case 'on_progress': badge = '<span class="badge bg-warning">On_progress</span>'; break;
+                                case 'on_progress': badge = '<span class="badge bg-warning">On Progres</span>'; break;
                                 case 'closed': badge = '<span class="badge bg-success">Closed</span>'; break;
                                 case 'canceled': badge = '<span class="badge bg-secondary">Canceled</span>'; break;
                                 default: badge = '<span class="badge bg-secondary">'+ '-' +'</span>'; break;
@@ -249,8 +256,11 @@
                 ]
             });
             $('#tabel tbody').on('dblclick', 'tr', function() {
-                let rowData = table.row($(this).closest('tr')).data();
+                selectedRowData = table.row(this).data(); // 🔥 SIMPAN GLOBAL
+                var rowData = selectedRowData;
                 if (!rowData) return;
+                // $('#btnApproved').hide();
+                // $('#btnNotApproved').hide();
 
                 $('#label_ticketno').text('Detail Ticket: ' + rowData.ticket_no);
                 $('#ticketno').val(rowData.ticket_no ?? '');
@@ -341,6 +351,18 @@
                     $('#btnStart').removeClass('disabled');
                     $('#btnFinish').addClass('disabled');
                     setFormDisabled(true);
+                }
+
+                const btnApprove = $('#btnApproved');
+                const btnReject = $('#btnNotApproved');
+
+                btnApprove.hide();
+                btnReject.hide();
+                console.table(rowData);
+                if ((jenis_ticket === 'software' || jenis_ticket === 'hardware') && rowData.need_approve ===
+                    true) {
+                    btnApprove.show();
+                    btnReject.show();
                 }
             });
 
@@ -505,9 +527,52 @@
             });
         }
 
+        function btnApproved() {
+            submitApproval("approved");
+        }
+
+        function btnNotApproved() {
+            submitApproval("rejected");
+        }
+
+        function submitApproval(status) {
+            if (!selectedRowData) {
+                Swal.fire('Warning', 'Data belum dipilih', 'warning');
+                return;
+            }
+            // Ambil data dari row terpilih
+            const jenis_ticket = selectedRowData.jenis_ticket;
+            const ticket_no = selectedRowData.ticket_no;
+            $.ajax({
+                url: '/ticketings/incoming_approval_proses',
+                type: "POST",
+                data: { status: status, jenis_ticket: jenis_ticket, ticket_no: ticket_no},
+                success: function(res) {
+                    if (res.success) {
+                        Swal.fire({ icon: "success", title: "Success",  text: res.message, timer: 2000, showConfirmButton: false});
+                        setTimeout(() => {
+                            $('#detailTicketModal').modal('hide');
+                            resetFilter(); // reload data
+                        }, 2000);
+                    } else {
+                        Swal.fire('Warning', res.message, 'warning');
+                    }
+
+                },
+                error: function(xhr) {
+                    let msg = "Terjadi kesalahan Server";
+
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+
+                    Swal.fire("Gagal", msg, "error");
+                }
+            });
+        }
+
         let startTime = null;
         let finishTime = null;
-
         function formatDateToDB(date) {
             // Format: YYYY-MM-DD HH:MM:SS
             const yyyy = date.getFullYear();

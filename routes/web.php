@@ -65,13 +65,6 @@ Route::middleware('auth')->group(function () {
             Route::post('/{id}', [PositionController::class, 'update'])->name('positions.update');
             Route::delete('/{id}', [PositionController::class, 'destroy'])->name('positions.destroy');
         });
-        Route::prefix('tickets')->group(function () {
-            Route::get('/', [MstTicketController::class, 'index'])->name('tickets.index');
-            Route::post('/data', [MstTicketController::class, 'data'])->name('tickets.data');
-            Route::post('/create', [MstTicketController::class, 'create'])->name('tickets.create');
-            Route::post('/update/{id}', [MstTicketController::class, 'update'])->name('tickets.update');
-            Route::delete('delete/{id}', [MstTicketController::class, 'destroy'])->name('tickets.destroy');
-        });
     });
     Route::middleware(['auth', 'akses:developer,superAdmin'])->group(function () {
         Route::prefix('hardwares')->group(function () {
@@ -89,7 +82,6 @@ Route::middleware('auth')->group(function () {
             Route::delete('/delete/{id}', [SoftwareController::class, 'destroy'])->name('softwares.destroy');
         });
     });
-
 
     Route::middleware(['auth', 'akses:developer,superAdmin,admin'])->group(function () {
         Route::prefix('userHirarkis')->group(function () {
@@ -156,7 +148,7 @@ Route::middleware('auth')->group(function () {
         });
 
         //incoming hw
-        Route::middleware(['auth', 'akses:developer,isAdminIt,isTS'])->group(function () {
+        Route::middleware(['auth', 'akses:developer,isAdminIt,isTS,isAsmenIt'])->group(function () {
             Route::get('/incoming_hardware', [TicketingController::class, 'incoming_hardware'])->name('ticketing.incoming_hardware');
             Route::post('/data_incoming_hardware', [TicketingController::class, 'data_incoming_hardware'])->name('ticketing.data_incoming_hardware');
             Route::post('/hw_start_proses', [TicketingController::class, 'hw_start_proses'])->name('ticketing.hw_start_proses');
@@ -164,11 +156,12 @@ Route::middleware('auth')->group(function () {
         });
 
         //incoming sw
-        Route::middleware(['auth', 'akses:developer,isAdminIt,isImplementator'])->group(function () {
+        Route::middleware(['auth', 'akses:developer,isAdminIt,isImplementator,isAsmenIt'])->group(function () {
             Route::get('/incoming_software', [TicketingController::class, 'incoming_software'])->name('ticketing.incoming_software');
             Route::post('/data_incoming_software', [TicketingController::class, 'data_incoming_software'])->name('ticketing.data_incoming_software');
             Route::post('/sw_start_proses', [TicketingController::class, 'sw_start_proses'])->name('ticketing.sw_start_proses');
             Route::post('/sw_finish_proses', [TicketingController::class, 'sw_finish_proses'])->name('ticketing.sw_finish_proses');
+            Route::post('/incoming_approval_proses', [TicketingController::class, 'incoming_approval_proses'])->name('ticketing.incoming_approval_proses');
             Route::get('/incoming-software/pdf/preview', [TicketingController::class, 'incoming_software_pdf']);
         });
 

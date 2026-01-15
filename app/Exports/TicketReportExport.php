@@ -263,14 +263,35 @@ class TicketReportExport implements FromCollection, WithEvents, WithTitle
                         'M' => $this->qrUserCreatePath,
                     };
 
-                    // Insert QR
-                    $drawing = new Drawing();
-                    $drawing->setPath($qrPath);
-                    $drawing->setCoordinates("{$col}{$qrStartRow}");
-                    $drawing->setHeight(80);
-                    $drawing->setOffsetX(25);
-                    $drawing->setOffsetY(10);
-                    $drawing->setWorksheet($sheet);
+                    // Logic khusus: L2 & L3 bisa diganti "-" jika file tidak ada
+                    if (in_array($col, ['I','K'])) {
+                        if ($qrPath && file_exists($qrPath)) {
+                            $drawing = new Drawing();
+                            $drawing->setPath($qrPath);
+                            $drawing->setCoordinates("{$col}{$qrStartRow}");
+                            $drawing->setHeight(80);
+                            $drawing->setOffsetX(25);
+                            $drawing->setOffsetY(10);
+                            $drawing->setWorksheet($sheet);
+                        } else {
+                            // L2 / L3 belum approve → tampilkan teks "-"
+                            $sheet->setCellValue("{$col}{$qrStartRow}", '-');
+                            $sheet->getStyle("{$col}{$qrStartRow}")->getAlignment()
+                                ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+                                ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                        }
+                    }
+
+                    // Untuk M (user create) selalu insert QR
+                    if ($col === 'M') {
+                        $drawing = new Drawing();
+                        $drawing->setPath($qrPath);
+                        $drawing->setCoordinates("{$col}{$qrStartRow}");
+                        $drawing->setHeight(80);
+                        $drawing->setOffsetX(25);
+                        $drawing->setOffsetY(10);
+                        $drawing->setWorksheet($sheet);
+                    }
 
                     // Merge sel untuk nama & title
                     $sheet->mergeCells("{$col}" . ($signRow + 6) . ":{$next}" . ($signRow + 6));
@@ -280,6 +301,7 @@ class TicketReportExport implements FromCollection, WithEvents, WithTitle
                     $sheet->setCellValue("{$col}" . ($signRow + 6), $names[$col]);
                     $sheet->setCellValue("{$col}" . ($signRow + 7), $titles[$col]);
                 }
+
 
                 // Style tanda tangan
                 $sheet->getStyle("I{$signRow}:N" . ($signRow + 7))->applyFromArray([

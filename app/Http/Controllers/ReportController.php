@@ -482,8 +482,15 @@ class ReportController extends Controller
         }
         DB::beginTransaction();
         try {
+            if ($jenis_ticket === 'software') {
+                $label = 'SW';
+            } else {
+                $label = 'HW';
+            }
 
+            $ticket_no = 'RPT/' . $label . '/' . $week . '/' . $month . '/' . $year;
             ReportTicket::create([
+                'ticket_no' => $ticket_no,
                 'year' => $year,
                 'month' => $month,
                 'week' => $week,
@@ -494,7 +501,6 @@ class ReportController extends Controller
                 'status_ticket' => 'waiting',
             ]);
 
-            $ticket_no = 'RPT/' . $week . '/' . $month . '/' . $year;
             $message = "Report ticket {$jenis_ticket} ({$ticket_no}) menunggu approval.";
             ActivityLogger::log('create', 'Ticket', 'Primary: ' . $ticket_no);
             if ($next_approver) {
@@ -702,7 +708,6 @@ class ReportController extends Controller
         $month = $request->month;
         $week = $request->week;
         $jenis_ticket = $request->jenis_ticket;
-
         $startDay = ($week - 1) * 7 + 1;
         $endDay   = min($startDay + 6, cal_days_in_month(CAL_GREGORIAN, $month, $year));
 
@@ -787,8 +792,13 @@ class ReportController extends Controller
 
         // Generate QR PNG
         Builder::create()->writer(new PngWriter())->data($qrUserCreateText)->size(150)->build()->saveToFile($qrUserCreatePath);
-        Builder::create()->writer(new PngWriter())->data($qrApproverLevel2Text)->size(150)->build()->saveToFile($qrApproverL2Path);
-        Builder::create()->writer(new PngWriter())->data($qrApproverLevel3Text)->size(150)->build()->saveToFile($qrApproverL3Path);
+        if($reportTicket->status_level2 == TRUE){
+            Builder::create()->writer(new PngWriter())->data($qrApproverLevel2Text)->size(150)->build()->saveToFile($qrApproverL2Path);
+        }
+        if($reportTicket->status_level3 == TRUE){
+            Builder::create()->writer(new PngWriter())->data($qrApproverLevel3Text)->size(150)->build()->saveToFile($qrApproverL3Path);
+        }
+        
 
         // Optional: hapus QR setelah generate
         register_shutdown_function(function () use ($qrUserCreatePath, $qrApproverL2Path, $qrApproverL3Path) {
@@ -796,6 +806,10 @@ class ReportController extends Controller
             @unlink($qrApproverL2Path);
             @unlink($qrApproverL3Path);
         });
+
+        $qrApproverL2Path = ($reportTicket->status_level2 == TRUE && file_exists($qrApproverL2Path))? $qrApproverL2Path: '-';
+        $qrApproverL3Path = ($reportTicket->status_level3 == TRUE && file_exists($qrApproverL3Path))? $qrApproverL3Path: '-';
+
         // ===============================
         // PIE (Jenis Departemen)
         // ===============================

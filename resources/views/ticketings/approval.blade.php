@@ -287,29 +287,15 @@ $(document).ready(function() {
         const btnApprove = $('#btnApproved');
         const btnReject = $('#btnNotApproved');
 
-        let hideButtons = true; 
+        btnApprove.hide();
+        btnReject.hide();
+        console.table(rowData);
+
+        if ((jenis_ticket === 'software' || jenis_ticket === 'hardware') && rowData.need_approve === true) {
+            btnApprove.show();
+            btnReject.show();
+        }
         
-        if (jenis_ticket === 'software' || jenis_ticket === 'hardware') {
-            if (currentUser === rowData.approver_level2 && (rowData.status_level2 === null || rowData.status_level2 === undefined)) {
-                hideButtons = false;
-            }
-            if (currentUser === rowData.approver_level3  && (rowData.status_level3 === null || rowData.status_level3 === undefined)) {
-                hideButtons = false;
-            }
-            if (currentUser === rowData.approver_level4  && (rowData.status_level4 === null || rowData.status_level4 === undefined)) {
-                hideButtons = false;
-            }
-        }
-
-
-        if (hideButtons) {
-            $('#btnApproved').hide();
-            $('#btnNotApproved').hide();
-        } else {
-            $('#btnApproved').show();
-            $('#btnNotApproved').show();
-        }
-
         $('#detailTicketModal').modal('show');
         
     });

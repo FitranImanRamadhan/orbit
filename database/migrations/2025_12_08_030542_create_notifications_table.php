@@ -17,8 +17,13 @@ return new class extends Migration
             $table->enum('status', ['unread', 'read'])->default('unread');
             $table->timestamps();
 
-            // optional, kalau ingin relasi:
-            // $table->foreign('username')->references('username')->on('users');
+            $table->index('username', 'idx_notif_username');
+            $table->index('plant_id', 'idx_notif_plant_id');
+            $table->index('status', 'idx_notif_status');
+            $table->index('ticket_no', 'idx_notif_ticket_no');
+            $table->index(['username', 'plant_id'], 'idx_notif_user_plant');
+            $table->index(['username', 'plant_id', 'status'], 'idx_notif_unread');
+
         });
     }
 

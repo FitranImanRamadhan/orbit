@@ -89,6 +89,23 @@
               </div>
             </div>
           </div>
+          <div class="mt-2" id="containerRemarks">
+                  <h6>Remarks</h6>
+                <div class="d-flex text-muted mb-1" style="font-size:12px;" id="rowRemark2">
+                    <strong id="nama_remark2" class="me-1"></strong>
+                    <span id="remark2"></span>
+                </div>
+
+                <div class="d-flex text-muted mb-1" style="font-size:12px;" id="rowRemark3">
+                    <strong id="nama_remark3" class="me-1"></strong>
+                    <span id="remark3"></span>
+                </div>
+
+                <div class="d-flex text-muted mb-1" style="font-size:12px;" id="rowRemark4">
+                    <strong id="nama_remark4" class="me-1"></strong>
+                    <span id="remark4"></span>
+                </div>
+            </div>
         </div>
         <hr>
         @include('components.chat')
@@ -116,10 +133,10 @@ $(document).ready(function() {
         scrollX: true,
         scrollCollapse: true,
         columns: [
-            { data: 'ticket_no', width: "80px"}, 
+            { data: 'ticket_no', width: "185px"}, 
             { data: 'nama_lengkap', width: "170px" },
             { data: 'nama_departemen'},
-            { data: 'tgl_permintaan', width: "130px"}, 
+            { data: 'tgl_permintaan', width: "150px"}, 
             { data: 'jenis_ticket',
                 render: function(data) {
                     switch (data) {
@@ -167,6 +184,30 @@ $(document).ready(function() {
         $('#deskripsi').val(rowData.deskripsi ?? '');
         $('#nama').val(rowData.nama_lengkap ?? '');
         $('#departemen').val(rowData.nama_departemen ?? '');
+
+        $('#containerRemarks').hide();
+        $('#rowRemark2, #rowRemark3, #rowRemark4').hide();
+        $('#remark2, #remark3, #remark4').text('');
+        $('#nama_remark2, #nama_remark3, #nama_remark4').text('');
+        
+        if (rowData.remarks2) {
+            $('#nama_remark2').text(rowData.nama_lengkap2);
+            $('#remark2').text(' : ' +rowData.remarks2);
+            $('#rowRemark2').show();
+            $('#containerRemarks').show();
+        }
+        if (rowData.remarks3) {
+            $('#nama_remark3').text(rowData.nama_lengkap3);
+            $('#remark3').text(' : ' +rowData.remarks3);
+            $('#rowRemark3').show();
+            $('#containerRemarks').show();
+        }
+        if (rowData.remarks4) {
+            $('#nama_remark4').text(rowData.nama_lengkap4);
+            $('#remark4').text(' : ' +rowData.remarks4);
+            $('#rowRemark4').show();
+            $('#containerRemarks').show();
+        }
 
         let jenis_ticket = rowData.jenis_ticket;
         if (jenis_ticket == 'software') {

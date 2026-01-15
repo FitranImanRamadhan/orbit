@@ -5,8 +5,6 @@
     $isNonIT = !$isIT;
 
     // dd(Auth::user());
-    
-    $isDev              = ($isIT && $user->user_akses === 'developer');
     $isSuperAdmin       = ($isIT && $user->user_akses === 'super_admin');
     $isImplementator    = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [37, 1006]));
     $isTS               = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [32, 1007]));
@@ -14,6 +12,7 @@
     $isLeaderTs         = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1007]));
     $isAdminIt          = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [34]));
     $isAsmenIt          = ($isIT && $user->user_akses === 'super_admin' && in_array($user->position_id, [1001]));
+    $isDev              = ($isIT && $user->user_akses === 'developer');
 
     //non it
     $isUserNonIT        = ($isNonIT && $user->user_akses === 'user');
@@ -66,7 +65,7 @@
                 </li>
                 @endif
                 
-                @if($isDev || $isImplementator)
+                @if($isDev || $isImplementator || $isAdmin)
                 <li class="nav-item">
                     <a href="{{ route('userHirarkis.index') }}" class="nav-link d-flex align-items-center {{ request()->routeIs('userHirarkis.index') ? 'active' : '' }}">
                         <i class="fa fa-user-cog icon"></i><span class="text nav-text">Setting Approval<br>Form Klaim</span>
@@ -119,16 +118,16 @@
                 </li>
                 @endif
 
-                @if($isDev || $isImplementator || $isTS || $isAdminIt)
+                @if($isDev || $isImplementator || $isTS || $isAdminIt || $isAsmenIt)
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center {{ request()->routeIs('ticketing.incoming_software') || request()->routeIs('ticketing.incoming_hardware') ? 'active' : '' }}" href="#" id="incomingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fa fa-inbox icon"></i><span class="text nav-text">Incoming Ticket</span>
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="incomingDropdown">
-                        @if($isDev || $isLeaderImp || $isAdminIt || $isImplementator )
+                        @if($isDev || $isLeaderImp || $isAdminIt || $isImplementator || $isAsmenIt)
                             <li><a class="dropdown-item {{ request()->routeIs('ticketing.incoming_software') ? 'active' : '' }}" href="{{ route('ticketing.incoming_software') }}">Software</a></li>
                         @endif
-                        @if($isDev || $isLeaderTs || $isAdminIt || $isTS)
+                        @if($isDev || $isLeaderTs || $isAdminIt || $isTS || $isAsmenIt)
                             <li><a class="dropdown-item {{ request()->routeIs('ticketing.incoming_hardware') ? 'active' : '' }}" href="{{ route('ticketing.incoming_hardware') }}">Hardware</a></li>
                         @endif
                     </ul>

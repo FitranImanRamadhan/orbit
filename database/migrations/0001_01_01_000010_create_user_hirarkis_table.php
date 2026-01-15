@@ -15,11 +15,11 @@ class CreateUserHirarkisTable extends Migration
             $table->foreign('plant_id')->references('id_plant')->on('plants')->onDelete('set null');
             $table->unsignedBigInteger('departemen_id')->nullable();
             $table->foreign('departemen_id')->references('id_departemen')->on('departemens')->onDelete('set null');
-            $table->string('level5')->nullable();
-            $table->string('level4')->nullable();
-            $table->string('level3')->nullable();
-            $table->string('level2')->nullable();
-            $table->string('level1')->nullable();
+            $table->text('level5')->nullable();
+            $table->text('level4')->nullable();
+            $table->text('level3')->nullable();
+            $table->text('level2')->nullable();
+            $table->text('level1')->nullable();
 
             $table->timestamps();
         });

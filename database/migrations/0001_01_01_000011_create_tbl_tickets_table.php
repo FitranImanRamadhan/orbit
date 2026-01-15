@@ -8,7 +8,6 @@ class CreateTblTicketsTable extends Migration
 {
     public function up()
     {   
-        Schema::dropIfExists('tbl_tickets');
         Schema::create('tbl_tickets', function (Blueprint $table) {
             $table->id();
             $table->string('ticket_no', 30)->unique();                              // untuk keduanya                     
@@ -55,6 +54,16 @@ class CreateTblTicketsTable extends Migration
             $table->string('priority', 30)->default('medium');// low, medium, high  // untuk keduanya
             
             $table->timestamps(); // created_at & updated_at
+
+            $table->index('ticket_no', 'idx_tickets_ticket_no');
+            $table->index('user_create', 'idx_tickets_user_create');
+            $table->index('status_problem', 'idx_tickets_status_problem');
+            $table->index('tgl_permintaan', 'idx_tickets_tgl_permintaan');
+            $table->index('jenis_ticket', 'idx_tickets_jenis_ticket');
+            $table->index('approver_level2', 'idx_tickets_level2');
+            $table->index('approver_level3', 'idx_tickets_level3');
+            $table->index('approver_level4', 'idx_tickets_level4');
+
         });
     }
 

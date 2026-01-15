@@ -29,6 +29,12 @@ return new class extends Migration
 
             $table->rememberToken();
             $table->timestamps();
+
+            $table->index('plant_id', 'idx_users_plant');
+            $table->index('departemen_id', 'idx_users_departemen');
+            $table->index('position_id', 'idx_users_position');
+            $table->index('user_akses', 'idx_users_user_akses');
+            $table->index(['plant_id', 'departemen_id'], 'idx_users_plant_departemen_position');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
@@ -47,6 +53,8 @@ return new class extends Migration
 
             $table->foreign('user_id')->references('id_user')->on('users')->onDelete('set null');
         });
+
+    
 
     }
 

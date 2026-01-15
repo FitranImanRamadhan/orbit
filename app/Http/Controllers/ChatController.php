@@ -28,7 +28,7 @@ class ChatController extends Controller
             return true;
         }
         // Jika dia approver tiket → boleh
-        if ($ticket->approver_level2 == $user->username || $ticket->approver_level3 == $user->username) {
+        if ($ticket->approver_level2 == $user->username || $ticket->approver_level3 == $user->username || $ticket->approver_level4 == $user->username) {
             return true;
         }
         if ($user->departemen_id == 3) {

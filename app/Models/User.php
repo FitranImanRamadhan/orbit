@@ -44,7 +44,10 @@ class User extends Authenticatable
             ->leftJoin('departemens as d', 'd.id_departemen', '=', 'u.departemen_id')
             ->leftJoin('positions as pos', 'pos.id_position', '=', 'u.position_id')
             ->select(
+                'u.username',
                 'u.nama_lengkap',
+                'u.plant_id',
+                'u.departemen_id',
                 'p.label as nama_plant',
                 'd.nama_departemen',
                 'pos.nama_position'

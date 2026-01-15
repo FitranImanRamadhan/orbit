@@ -257,11 +257,15 @@
                     <td style="border:1px solid #000;width:16%;padding:2mm;text-align:center;">
                         @if ($finalIt['diketahui_qr'])
                             <img src="{{ $finalIt['diketahui_qr'] }}" style="height:12mm;">
+                        @else
+                            -
                         @endif
                     </td>
                     <td style="border:1px solid #000;width:16%;padding:2mm;text-align:center;">
                         @if ($finalIt['diperiksa_qr'])
                             <img src="{{ $finalIt['diperiksa_qr'] }}" style="height:12mm;">
+                       @else
+                            -
                         @endif
                     </td>
                     <td style="border:1px solid #000;width:16%;padding:2mm;text-align:center;">

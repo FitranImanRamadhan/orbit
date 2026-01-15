@@ -4,16 +4,16 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateReportTicketsTable extends Migration
+return new class extends Migration
 {
-    public function up()
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
     {
-        Schema::create('report_tickets', function (Blueprint $table) {
-            $table->id();
+        Schema::create('incoming_approvals', function (Blueprint $table) {
+           $table->id();
             $table->string('ticket_no', 30)->unique();    
-            $table->integer('year')->nullable();
-            $table->integer('month')->nullable();
-            $table->integer('week')->nullable();
             $table->string('jenis_ticket', 30);     
             $table->string('user_create', 100);     
             $table->string('approver_level2', 100)->nullable();                                             
@@ -29,10 +29,15 @@ class CreateReportTicketsTable extends Migration
 
             // index untuk report
             $table->index(['ticket_no']);
-            $table->index(['year', 'month', 'week']);
             $table->index(['jenis_ticket']);
         });
     }
 
-    
-}
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('incoming_approval');
+    }
+};
